@@ -33,11 +33,7 @@ async function geocodeAddress(address) {
             params: {
                 q: address,
                 format: 'json',
-                limit: 1
-            },
-            headers: {
-                'User-Agent': 'Blablacargo/1.0'
-            }
+'User-Agent': 'KapGel/1.0'
         });
         if (response.data && response.data.length > 0) {
             return {
@@ -163,7 +159,7 @@ wss.on('connection', (ws) => {
           ws.clientId = courierId; // Associate ws with courierId for easy lookup
           ws.clientRole = 'courier';
           console.log(`Bir kurye kaydoldu: ${courierId}, Durum: Pasif`);
-          ws.send(JSON.stringify({ type: 'welcome', message: `blabla kargo ağına bağlandınız. ID'niz: ${courierId}` }));
+          ws.send(JSON.stringify({ type: 'welcome', message: `KapGel kargo ağına bağlandınız. ID'niz: ${courierId}` }));
         
         } else if (role === 'sender' && id) {
           const shipmentId = id;
@@ -650,6 +646,6 @@ app.get('/shipments/:id', (req, res) => {
 // ---- Start the Server ----
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`blabla kargo sunucusu ${PORT} portunda dinleniyor.`);
+  console.log(`KapGel sunucusu ${PORT} portunda dinleniyor.`);
 });
 

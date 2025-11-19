@@ -19,6 +19,7 @@ self.addEventListener('install', (event) => {
       return cache.addAll(FILES_TO_CACHE);
     })
   );
+  self.skipWaiting(); // Force the new service worker to activate immediately
 });
 
 // 2. Activate the service worker and clean up old caches

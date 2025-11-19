@@ -156,6 +156,34 @@
             color: #6c757d;
             text-align: right;
         }
+
+        .tab-button {
+            background-color: #e9ecef;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 0 5px;
+            border-radius: 5px;
+            font-size: 1em;
+            color: #495057;
+            transition: background-color 0.3s ease;
+        }
+
+        .tab-button.active {
+            background-color: #007bff;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
+        }
+
+        .tab-button:hover:not(.active) {
+            background-color: #dae2e7;
+        }
+
+        .summary-tab-content {
+            padding: 15px 0;
+            border-top: 1px solid #eee;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -178,12 +206,33 @@
             </div>
         </div>
 
-        <div id="dailyFinancialSummary" class="rating-display" style="margin-top: 20px;">
-            <h2>Günlük Finansal Özet</h2>
-            <p><strong>Bugünkü Kazanılan:</strong> <span id="dailyEarned">0.00</span> TL</p>
-            <p><strong>Bugünkü Yakıt Gideri:</strong> <span id="dailyFuelExpense">0.00</span> TL</p>
-            <p><strong>Bugünkü Diğer Giderler:</strong> <span id="dailyOtherExpenses">0.00</span> TL</p>
-            <p style="font-size: 1.2em; font-weight: bold; color: #007bff;"><strong>Bugünkü Net Kâr:</strong> <span id="dailyNetProfit">0.00</span> TL</p>
+        <div id="financialOverview" class="rating-display" style="margin-top: 20px;">
+            <h2>Finansal Genel Bakış</h2>
+            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                <button class="tab-button active" data-timeframe="daily">Günlük</button>
+                <button class="tab-button" data-timeframe="weekly">Haftalık</button>
+                <button class="tab-button" data-timeframe="monthly">Aylık</button>
+            </div>
+            <div id="summaryContent">
+                <div id="dailySummaryContent" class="summary-tab-content active">
+                    <p><strong>Kazanılan:</strong> <span id="summaryEarned">0.00</span> TL</p>
+                    <p><strong>Yakıt Gideri:</strong> <span id="summaryFuelExpense">0.00</span> TL</p>
+                    <p><strong>Diğer Giderler:</strong> <span id="summaryOtherExpenses">0.00</span> TL</p>
+                    <p style="font-size: 1.2em; font-weight: bold; color: #007bff;"><strong>Net Kâr:</strong> <span id="summaryNetProfit">0.00</span> TL</p>
+                </div>
+                <div id="weeklySummaryContent" class="summary-tab-content" style="display:none;">
+                    <p><strong>Kazanılan:</strong> <span id="weeklyEarned">0.00</span> TL</p>
+                    <p><strong>Yakıt Gideri:</strong> <span id="weeklyFuelExpense">0.00</span> TL</p>
+                    <p><strong>Diğer Giderler:</strong> <span id="weeklyOtherExpenses">0.00</span> TL</p>
+                    <p style="font-size: 1.2em; font-weight: bold; color: #007bff;"><strong>Net Kâr:</strong> <span id="weeklyNetProfit">0.00</span> TL</p>
+                </div>
+                <div id="monthlySummaryContent" class="summary-tab-content" style="display:none;">
+                    <p><strong>Kazanılan:</strong> <span id="monthlyEarned">0.00</span> TL</p>
+                    <p><strong>Yakıt Gideri:</strong> <span id="monthlyFuelExpense">0.00</span> TL</p>
+                    <p><strong>Diğer Giderler:</strong> <span id="monthlyOtherExpenses">0.00</span> TL</p>
+                    <p style="font-size: 1.2em; font-weight: bold; color: #007bff;"><strong>Net Kâr:</strong> <span id="monthlyNetProfit">0.00</span> TL</p>
+                </div>
+            </div>
         </div>
 
         <div id="verificationStatusDisplay" style="text-align: center; margin-bottom: 20px; font-size: 1.1em; font-weight: bold;"></div>
@@ -208,30 +257,33 @@
     </div>
 
     <script>
-        const shipmentsList = document.getElementById('shipmentsList');
-        const courierIdDisplay = document.getElementById('courierIdDisplay');
-        const courierStatusToggle = document.getElementById('courierStatusToggle');
-        const statusLabel = document.getElementById('statusLabel');
-        const averageRatingDisplay = document.getElementById('averageRatingDisplay');
-        const totalRatingsDisplay = document.getElementById('totalRatingsDisplay');
-        const ratingProgressBar = document.getElementById('ratingProgressBar');
         let isCourierActive = false;
         let locationWatcherId = null;
 
-        // Daily Financial Summary Elements
-        const dailyEarnedDisplay = document.getElementById('dailyEarned');
-        const dailyFuelExpenseDisplay = document.getElementById('dailyFuelExpense');
-        const dailyOtherExpensesDisplay = document.getElementById('dailyOtherExpenses');
-        const dailyNetProfitDisplay = document.getElementById('dailyNetProfit');
+        // Financial Summary Elements
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const summaryTabContents = document.querySelectorAll('.summary-tab-content');
+
+        // Daily Summary Spans
+        const summaryEarnedDisplay = document.getElementById('summaryEarned');
+        const summaryFuelExpenseDisplay = document.getElementById('summaryFuelExpense');
+        const summaryOtherExpensesDisplay = document.getElementById('summaryOtherExpenses');
+        const summaryNetProfitDisplay = document.getElementById('summaryNetProfit');
+
+        // Weekly Summary Spans
+        const weeklyEarnedDisplay = document.getElementById('weeklyEarned');
+        const weeklyFuelExpenseDisplay = document.getElementById('weeklyFuelExpense');
+        const weeklyOtherExpensesDisplay = document.getElementById('weeklyOtherExpenses');
+        const weeklyNetProfitDisplay = document.getElementById('weeklyNetProfit');
+
+        // Monthly Summary Spans
+        const monthlyEarnedDisplay = document.getElementById('monthlyEarned');
+        const monthlyFuelExpenseDisplay = document.getElementById('monthlyFuelExpense');
+        const monthlyOtherExpensesDisplay = document.getElementById('monthlyOtherExpenses');
+        const monthlyNetProfitDisplay = document.getElementById('monthlyNetProfit');
 
         let availableShipments = {}; // To store shipment details from 'new_shipment' event
-        let dailyFinancials = {
-            date: '',
-            earned: 0,
-            fuelExpense: 0,
-            otherExpenses: 0,
-            netProfit: 0
-        };
+        let courierShipmentsHistory = []; // To store accepted shipments for historical summary
 
         // --- New Authentication Flow ---
         let courierId = localStorage.getItem('courierId');
@@ -254,58 +306,109 @@
         }
         // --- End of New Auth Flow ---
 
-        function getTodayDate() {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-            const day = String(today.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
+        // Helper functions for date calculations
+        function getStartOfDay(date) {
+            const d = new Date(date);
+            d.setHours(0, 0, 0, 0);
+            return d.getTime();
         }
 
-        function getDailyFinancials() {
-            const todayDate = getTodayDate();
-            const storedFinancials = localStorage.getItem('dailyCourierFinancials');
+        function getStartOfWeek(date) {
+            const d = new Date(date);
+            const day = d.getDay(); // Sunday - 0, Monday - 1, etc.
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Monday start
+            d.setDate(diff);
+            return getStartOfDay(d);
+        }
 
-            if (storedFinancials) {
-                const parsedFinancials = JSON.parse(storedFinancials);
-                if (parsedFinancials.date === todayDate) {
-                    dailyFinancials = parsedFinancials;
-                } else {
-                    // Reset for a new day
-                    dailyFinancials = {
-                        date: todayDate,
-                        earned: 0,
-                        fuelExpense: 0,
-                        otherExpenses: 0,
-                        netProfit: 0
-                    };
+        function getStartOfMonth(date) {
+            const d = new Date(date);
+            d.setDate(1);
+            return getStartOfDay(d);
+        }
+
+        // localStorage management for shipment history
+        function loadShipmentHistory() {
+            const storedHistory = localStorage.getItem('courierShipmentsHistory_' + courierId);
+            courierShipmentsHistory = storedHistory ? JSON.parse(storedHistory) : [];
+        }
+
+        function saveShipmentHistory() {
+            localStorage.setItem('courierShipmentsHistory_' + courierId, JSON.stringify(courierShipmentsHistory));
+        }
+
+        // Calculate summary for a given date range
+        function calculateSummary(startDate, endDate) {
+            let totalEarned = 0;
+            let totalFuelExpense = 0;
+            let totalOtherExpenses = 0;
+            let totalNetProfit = 0;
+
+            courierShipmentsHistory.forEach(shipment => {
+                if (shipment.timestamp >= startDate && shipment.timestamp < endDate) {
+                    totalEarned += parseFloat(shipment.earnings_breakdown.musteri_fiyati);
+                    totalFuelExpense += parseFloat(shipment.earnings_breakdown.tahmini_yakit_gideri);
+                    totalOtherExpenses += parseFloat(shipment.earnings_breakdown.diger_giderler);
+                    totalNetProfit += parseFloat(shipment.earnings_breakdown.kurye_net_kar);
                 }
-            } else {
-                // Initialize for the first time
-                dailyFinancials = {
-                    date: todayDate,
-                    earned: 0,
-                    fuelExpense: 0,
-                    otherExpenses: 0,
-                    netProfit: 0
-                };
+            });
+            return { earned: totalEarned, fuelExpense: totalFuelExpense, otherExpenses: totalOtherExpenses, netProfit: totalNetProfit };
+        }
+
+        // Update display for a specific summary type
+        function updateSummaryDisplay(summaryData, prefix) {
+            document.getElementById(prefix + 'Earned').textContent = summaryData.earned.toFixed(2);
+            document.getElementById(prefix + 'FuelExpense').textContent = summaryData.fuelExpense.toFixed(2);
+            document.getElementById(prefix + 'OtherExpenses').textContent = summaryData.otherExpenses.toFixed(2);
+            document.getElementById(prefix + 'NetProfit').textContent = summaryData.netProfit.toFixed(2);
+        }
+
+        // Show specific summary (daily, weekly, monthly)
+        function showSummary(timeframe) {
+            tabButtons.forEach(button => button.classList.remove('active'));
+            summaryTabContents.forEach(content => content.style.display = 'none');
+
+            let summaryData;
+            const now = Date.now();
+            let startDate, endDate;
+
+            if (timeframe === 'daily') {
+                document.querySelector('[data-timeframe="daily"]').classList.add('active');
+                document.getElementById('dailySummaryContent').style.display = 'block';
+                startDate = getStartOfDay(now);
+                endDate = startDate + (24 * 60 * 60 * 1000); // End of today
+                summaryData = calculateSummary(startDate, endDate);
+                updateSummaryDisplay(summaryData, 'summary'); // 'summary' prefix for daily spans
+            } else if (timeframe === 'weekly') {
+                document.querySelector('[data-timeframe="weekly"]').classList.add('active');
+                document.getElementById('weeklySummaryContent').style.display = 'block';
+                startDate = getStartOfWeek(now);
+                endDate = startDate + (7 * 24 * 60 * 60 * 1000); // End of this week
+                summaryData = calculateSummary(startDate, endDate);
+                updateSummaryDisplay(summaryData, 'weekly');
+            } else if (timeframe === 'monthly') {
+                document.querySelector('[data-timeframe="monthly"]').classList.add('active');
+                document.getElementById('monthlySummaryContent').style.display = 'block';
+                startDate = getStartOfMonth(now);
+                const nextMonth = new Date(startDate);
+                nextMonth.setMonth(nextMonth.getMonth() + 1);
+                endDate = nextMonth.getTime(); // End of this month
+                summaryData = calculateSummary(startDate, endDate);
+                updateSummaryDisplay(summaryData, 'monthly');
             }
-            updateFinancialSummaryDisplay();
-        }
-
-        function saveDailyFinancials() {
-            localStorage.setItem('dailyCourierFinancials', JSON.stringify(dailyFinancials));
-        }
-
-        function updateFinancialSummaryDisplay() {
-            dailyEarnedDisplay.textContent = dailyFinancials.earned.toFixed(2);
-            dailyFuelExpenseDisplay.textContent = dailyFinancials.fuelExpense.toFixed(2);
-            dailyOtherExpensesDisplay.textContent = dailyFinancials.otherExpenses.toFixed(2);
-            dailyNetProfitDisplay.textContent = dailyFinancials.netProfit.toFixed(2);
         }
 
         function initializePanel() {
-            getDailyFinancials(); // Load or initialize daily financials at panel start
+            loadShipmentHistory(); // Load all historical shipments for this courier
+            showSummary('daily'); // Show daily summary by default
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const timeframe = button.dataset.timeframe;
+                    showSummary(timeframe);
+                });
+            });
+
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsHost = window.location.host;
             const wsUrl = `${wsProtocol}//${wsHost}`;
@@ -515,16 +618,13 @@
                 if (response.ok) {
                     alert(`Gönderi ${shipmentId} başarıyla kabul edildi!`);
 
-                    // Update daily financials
+                    // Add accepted shipment to history
                     const acceptedShipment = availableShipments[shipmentId];
                     if (acceptedShipment && acceptedShipment.earnings_breakdown) {
-                        const breakdown = acceptedShipment.earnings_breakdown;
-                        dailyFinancials.earned += parseFloat(breakdown.musteri_fiyati); // Assuming customer price is total earned
-                        dailyFinancials.fuelExpense += parseFloat(breakdown.tahmini_yakit_gideri);
-                        dailyFinancials.otherExpenses += parseFloat(breakdown.diger_giderler);
-                        dailyFinancials.netProfit += parseFloat(breakdown.kurye_net_kar);
-                        saveDailyFinancials();
-                        updateFinancialSummaryDisplay();
+                        acceptedShipment.timestamp = Date.now(); // Add timestamp
+                        courierShipmentsHistory.push(acceptedShipment);
+                        saveShipmentHistory();
+                        showSummary('daily'); // Refresh summaries
                     }
                     delete availableShipments[shipmentId]; // Remove accepted shipment from available
                     window.location.href = `courier_active_job.html?shipmentId=${shipmentId}`;

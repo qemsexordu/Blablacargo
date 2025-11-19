@@ -178,6 +178,14 @@
             </div>
         </div>
 
+        <div id="dailyFinancialSummary" class="rating-display" style="margin-top: 20px;">
+            <h2>Günlük Finansal Özet</h2>
+            <p><strong>Bugünkü Kazanılan:</strong> <span id="dailyEarned">0.00</span> TL</p>
+            <p><strong>Bugünkü Yakıt Gideri:</strong> <span id="dailyFuelExpense">0.00</span> TL</p>
+            <p><strong>Bugünkü Diğer Giderler:</strong> <span id="dailyOtherExpenses">0.00</span> TL</p>
+            <p style="font-size: 1.2em; font-weight: bold; color: #007bff;"><strong>Bugünkü Net Kâr:</strong> <span id="dailyNetProfit">0.00</span> TL</p>
+        </div>
+
         <div id="verificationStatusDisplay" style="text-align: center; margin-bottom: 20px; font-size: 1.1em; font-weight: bold;"></div>
         <div id="verificationActionButton" style="text-align: center; margin-bottom: 20px; display: none;">
             <button id="goToVerificationBtn" style="padding: 10px 20px; background-color: #ffc107; color: #333; border: none; border-radius: 5px; cursor: pointer; font-size: 1em;">Kimlik Doğrulama Sayfasına Git</button>
@@ -185,6 +193,9 @@
 
         <div class="feedback-section">
             <h2>Müşteri Geri Bildirimleri</h2>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button id="viewFeedbackBtn" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em;">Geri Bildirimleri Gör</button>
+            </div>
             <div id="feedbackList">
                 <p style="text-align: center; color: #6c757d;">Henüz geri bildirim bulunmuyor.</p>
             </div>
@@ -207,6 +218,21 @@
         let isCourierActive = false;
         let locationWatcherId = null;
 
+        // Daily Financial Summary Elements
+        const dailyEarnedDisplay = document.getElementById('dailyEarned');
+        const dailyFuelExpenseDisplay = document.getElementById('dailyFuelExpense');
+        const dailyOtherExpensesDisplay = document.getElementById('dailyOtherExpenses');
+        const dailyNetProfitDisplay = document.getElementById('dailyNetProfit');
+
+        let availableShipments = {}; // To store shipment details from 'new_shipment' event
+        let dailyFinancials = {
+            date: '',
+            earned: 0,
+            fuelExpense: 0,
+            otherExpenses: 0,
+            netProfit: 0
+        };
+
         // --- New Authentication Flow ---
         const urlParams = new URLSearchParams(window.location.search);
         const courierId = urlParams.get('courierId');
@@ -220,7 +246,58 @@
         }
         // --- End of New Auth Flow ---
 
+        function getTodayDate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getDailyFinancials() {
+            const todayDate = getTodayDate();
+            const storedFinancials = localStorage.getItem('dailyCourierFinancials');
+
+            if (storedFinancials) {
+                const parsedFinancials = JSON.parse(storedFinancials);
+                if (parsedFinancials.date === todayDate) {
+                    dailyFinancials = parsedFinancials;
+                } else {
+                    // Reset for a new day
+                    dailyFinancials = {
+                        date: todayDate,
+                        earned: 0,
+                        fuelExpense: 0,
+                        otherExpenses: 0,
+                        netProfit: 0
+                    };
+                }
+            } else {
+                // Initialize for the first time
+                dailyFinancials = {
+                    date: todayDate,
+                    earned: 0,
+                    fuelExpense: 0,
+                    otherExpenses: 0,
+                    netProfit: 0
+                };
+            }
+            updateFinancialSummaryDisplay();
+        }
+
+        function saveDailyFinancials() {
+            localStorage.setItem('dailyCourierFinancials', JSON.stringify(dailyFinancials));
+        }
+
+        function updateFinancialSummaryDisplay() {
+            dailyEarnedDisplay.textContent = dailyFinancials.earned.toFixed(2);
+            dailyFuelExpenseDisplay.textContent = dailyFinancials.fuelExpense.toFixed(2);
+            dailyOtherExpensesDisplay.textContent = dailyFinancials.otherExpenses.toFixed(2);
+            dailyNetProfitDisplay.textContent = dailyFinancials.netProfit.toFixed(2);
+        }
+
         function initializePanel() {
+            getDailyFinancials(); // Load or initialize daily financials at panel start
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsHost = window.location.host;
             const wsUrl = `${wsProtocol}//${wsHost}`;
@@ -261,10 +338,12 @@
                 } else if (message.type === 'new_shipment') {
                     if (isCourierActive) {
                         const shipment = message.data;
+                        availableShipments[shipment.id] = shipment; // Store shipment details
                         displayNewShipment(shipment);
                     }
                 } else if (message.type === 'shipment_taken') {
                     const takenShipmentId = message.data.id;
+                    delete availableShipments[takenShipmentId]; // Remove from available shipments
                     const cardToRemove = document.getElementById(`shipment-${takenShipmentId}`);
                     if (cardToRemove) {
                         cardToRemove.remove();
@@ -427,6 +506,19 @@
                 const data = await response.json();
                 if (response.ok) {
                     alert(`Gönderi ${shipmentId} başarıyla kabul edildi!`);
+
+                    // Update daily financials
+                    const acceptedShipment = availableShipments[shipmentId];
+                    if (acceptedShipment && acceptedShipment.earnings_breakdown) {
+                        const breakdown = acceptedShipment.earnings_breakdown;
+                        dailyFinancials.earned += parseFloat(breakdown.musteri_fiyati); // Assuming customer price is total earned
+                        dailyFinancials.fuelExpense += parseFloat(breakdown.tahmini_yakit_gideri);
+                        dailyFinancials.otherExpenses += parseFloat(breakdown.diger_giderler);
+                        dailyFinancials.netProfit += parseFloat(breakdown.kurye_net_kar);
+                        saveDailyFinancials();
+                        updateFinancialSummaryDisplay();
+                    }
+                    delete availableShipments[shipmentId]; // Remove accepted shipment from available
                     window.location.href = `courier_active_job.html?shipmentId=${shipmentId}`;
                 } else {
                     alert(`Gönderi kabul edilirken hata oluştu: ${data.error}`);

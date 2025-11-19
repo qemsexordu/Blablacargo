@@ -1,7 +1,7 @@
 {
   "short_name": "BlaBlaCargo",
   "name": "BlaBlaCargo - Hızlı Kargo",
-  "start_url": "/sender.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#4A90E2",

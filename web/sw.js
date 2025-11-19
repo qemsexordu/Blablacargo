@@ -1,6 +1,7 @@
 const CACHE_NAME = 'blablacargo-v1';
 const FILES_TO_CACHE = [
   '/',
+  '/index.html',
   '/sender.html',
   '/courier.html',
   '/confirm-delivery.html',

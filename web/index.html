@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>blabla kargo - Hoş Geldiniz</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px 50px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 450px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        h1 {
+            color: #007bff;
+            margin-bottom: 15px;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+        p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            color: #555;
+        }
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .button {
+            padding: 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            display: block;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+        .button:hover {
+            transform: translateY(-2px);
+        }
+        .sender-btn {
+            background-color: #007bff;
+        }
+        .sender-btn:hover {
+            background-color: #0056b3;
+        }
+        .courier-btn {
+            background-color: #28a745;
+        }
+        .courier-btn:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>blabla kargo</h1>
+        <p>Türkiye'nin en hızlı ve en samimi kargo ağına hoş geldiniz.</p>
+        <div class="button-group">
+            <a href="/sender.html" class="button sender-btn">Gönderici Paneli</a>
+            <a href="/courier.html" class="button courier-btn">Kurye Paneli</a>
+        </div>
+    </div>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker kaydı başarılı:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker kaydı başarısız:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

@@ -114,10 +114,13 @@
     <div class="container">
         <h1>Gönderi Oluştur</h1>
         <form id="shipmentForm">
-            <h2>Gönderici Bilgileri</h2>
             <div class="form-group">
                 <label for="senderName">Ad Soyad / Firma Adı</label>
                 <input type="text" id="senderName" name="senderName" required>
+            </div>
+            <div class="form-group">
+                <label for="senderPhone">Telefon Numarası</label>
+                <input type="tel" id="senderPhone" name="senderPhone" required>
             </div>
             <div class="form-group">
                 <label for="senderAddress">Adres</label>
@@ -137,6 +140,10 @@
             <div class="form-group">
                 <label for="receiverName">Ad Soyad / Firma Adı</label>
                 <input type="text" id="receiverName" name="receiverName" required>
+            </div>
+            <div class="form-group">
+                <label for="receiverPhone">Telefon Numarası</label>
+                <input type="tel" id="receiverPhone" name="receiverPhone" required>
             </div>
             <div class="form-group">
                 <label for="receiverAddress">Adres</label>
@@ -202,12 +209,14 @@
 
             const sender = {
                 name: document.getElementById('senderName').value,
+                phone: document.getElementById('senderPhone').value,
                 address: document.getElementById('senderAddress').value,
                 latitude: parseFloat(document.getElementById('senderLatitude').value),
                 longitude: parseFloat(document.getElementById('senderLongitude').value)
             };
             const receiver = {
                 name: document.getElementById('receiverName').value,
+                phone: document.getElementById('receiverPhone').value,
                 address: document.getElementById('receiverAddress').value
             };
             const packageDetails = {

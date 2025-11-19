@@ -23,6 +23,66 @@ app.get('/', (req, res) => {
 const shipments = [];
 let shipmentCounter = 1;
 const courierLocations = new Map(); // courierId -> { latitude, longitude, timestamp }
+const registeredCouriers = []; // NOTE: In-memory storage, resets on server restart.
+let courierIdCounter = 1;
+
+// ---- Courier Authentication Endpoints ----
+
+// NOTE: In a real application, passwords MUST be hashed using a library like bcrypt.
+// Storing plain text passwords is a major security risk.
+
+app.post('/couriers/register', (req, res) => {
+    const { firstName, lastName, email, phone, password, vehicle, tcKimlikNo, iban } = req.body;
+
+    if (!firstName || !email || !password || !vehicle || !tcKimlikNo || !iban) {
+        return res.status(400).json({ error: 'Eksik bilgi. Tüm alanlar zorunludur.' });
+    }
+
+    // Check if email is already in use
+    if (registeredCouriers.some(c => c.email === email)) {
+        return res.status(409).json({ error: 'Bu e-posta adresi zaten kullanılıyor.' });
+    }
+
+    const newCourier = {
+        id: `kurye-${courierIdCounter++}`,
+        firstName,
+        lastName,
+        email,
+        phone,
+        password, // Storing plain text for demo purposes ONLY.
+        tcKimlikNo,
+        iban,
+        vehicle,
+        createdAt: new Date().toISOString()
+    };
+
+    registeredCouriers.push(newCourier);
+    console.log(`Yeni kurye kaydedildi: ${newCourier.id} - ${newCourier.email}`);
+    res.status(201).json({ message: 'Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz.' });
+});
+
+app.post('/couriers/login', (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ error: 'E-posta ve şifre zorunludur.' });
+    }
+
+    const courier = registeredCouriers.find(c => c.email === email);
+
+    if (!courier) {
+        return res.status(404).json({ error: 'Bu e-posta ile kayıtlı bir kurye bulunamadı.' });
+    }
+
+    if (courier.password !== password) {
+        // Plain text comparison for demo purposes ONLY.
+        return res.status(401).json({ error: 'Şifre yanlış.' });
+    }
+
+    console.log(`Kurye giriş yaptı: ${courier.id} - ${courier.email}`);
+    res.status(200).json({ message: 'Giriş başarılı!', courierId: courier.id });
+});
+
 
 // ---- Pricing & Geocoding Logic ----
 
@@ -154,17 +214,22 @@ wss.on('connection', (ws) => {
 
       // 1. Client Registration
       if (parsedMessage.type === 'register') {
-        const { role, id } = parsedMessage.data; // id can be shipmentId for senders
+        const { role, id } = parsedMessage.data; // id can be shipmentId for senders or courierId for couriers
 
         if (role === 'courier') {
-          const courierId = `kurye-${Math.random().toString(36).substring(2, 9)}`;
-          // Store the websocket connection and the courier's status
-          couriers.set(courierId, { ws: ws, status: 'inactive' });
-          ws.clientId = courierId; // Associate ws with courierId for easy lookup
-          ws.clientRole = 'courier';
-          console.log(`Bir kurye kaydoldu: ${courierId}, Durum: Pasif`);
-          ws.send(JSON.stringify({ type: 'welcome', message: `KapGel kargo ağına bağlandınız. ID'niz: ${courierId}` }));
-        
+            // A courier MUST provide their ID after logging in.
+            if (!id || !registeredCouriers.some(c => c.id === id)) {
+                ws.send(JSON.stringify({ type: 'error', message: 'Geçersiz kurye kimliği. Lütfen giriş yapın.' }));
+                ws.close();
+                return;
+            }
+            const courierId = id;
+            couriers.set(courierId, { ws: ws, status: 'inactive' });
+            ws.clientId = courierId;
+            ws.clientRole = 'courier';
+            console.log(`Kayıtlı kurye bağlandı: ${courierId}, Durum: Pasif`);
+            ws.send(JSON.stringify({ type: 'welcome', message: `KapGel kargo ağına bağlandınız. ID'niz: ${courierId}` }));
+
         } else if (role === 'sender' && id) {
           const shipmentId = id;
           senders.set(shipmentId, ws);
@@ -284,8 +349,8 @@ app.post('/shipments', async (req, res) => {
   const { sender, receiver, packageDetails } = req.body;
   
   // Basic validation
-  if (!sender || !receiver || !packageDetails || !sender.latitude || !sender.longitude || !receiver.address) {
-    return res.status(400).json({ error: 'Eksik gönderi bilgisi. Gönderici koordinatları ve alıcı adresi zorunludur.' });
+  if (!sender || !receiver || !packageDetails || !sender.latitude || !sender.longitude || !receiver.address || !sender.phone || !receiver.phone) {
+    return res.status(400).json({ error: 'Eksik gönderi bilgisi. Gönderici koordinatları, alıcı adresi ve telefon numaraları zorunludur.' });
   }
 
   // --- NEW: Automatically determine sender address ---
@@ -325,11 +390,15 @@ app.post('/shipments', async (req, res) => {
     id: `blabla-${shipmentCounter++}`,
     status: 'pending',
     deliveryCode: Math.floor(1000 + Math.random() * 9000).toString(),
-    sender,
+    sender: {
+        ...sender,
+        phone: sender.phone // Ensure phone is included
+    },
     receiver: {
         ...receiver,
         latitude: receiverCoords.latitude,
-        longitude: receiverCoords.longitude
+        longitude: receiverCoords.longitude,
+        phone: receiver.phone // Ensure phone is included
     },
     packageDetails,
     price: price,

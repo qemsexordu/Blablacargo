@@ -4,6 +4,8 @@ const FILES_TO_CACHE = [
   '/index.html',
   '/sender.html',
   '/courier.html',
+  '/kurye-kayit.html',
+  '/kurye-giris.html',
   '/confirm-delivery.html',
   '/manifest.json',
   '/images/icon-192.svg',

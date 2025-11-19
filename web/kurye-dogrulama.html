@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KapGel - Kurye Doğrulama</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 550px;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #28a745;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background-color: #f8f9fa;
+        }
+        input[type="file"]:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .response-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+        .response-message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .response-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .info-text {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kurye Doğrulama</h1>
+        <p class="info-text">Kimlik belgelerinizin ön ve arka yüzünü, ayrıca yüzünüzün net göründüğü bir selfie fotoğrafınızı yükleyerek hesabınızı doğrulayın.</p>
+        <form id="verificationForm">
+            <div class="form-group">
+                <label for="idFront">Kimlik Belgesi Ön Yüzü</label>
+                <input type="file" id="idFront" name="idFront" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label for="idBack">Kimlik Belgesi Arka Yüzü</label>
+                <input type="file" id="idBack" name="idBack" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label for="selfie">Selfie Fotoğrafı</label>
+                <input type="file" id="selfie" name="selfie" accept="image/*" required>
+            </div>
+            <button type="submit">Yükle ve Doğrula</button>
+        </form>
+        <div id="response" class="response-message" style="display: none;"></div>
+    </div>
+
+    <script>
+        document.getElementById('verificationForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const responseDiv = document.getElementById('response');
+            responseDiv.style.display = 'none';
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const courierId = urlParams.get('courierId');
+
+            if (!courierId) {
+                responseDiv.className = 'response-message error';
+                responseDiv.textContent = 'Kurye kimliği bulunamadı. Lütfen giriş yapın.';
+                responseDiv.style.display = 'block';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('idFront', document.getElementById('idFront').files[0]);
+            formData.append('idBack', document.getElementById('idBack').files[0]);
+            formData.append('selfie', document.getElementById('selfie').files[0]);
+
+            try {
+                const response = await fetch(`/couriers/${courierId}/verify-documents`, {
+                    method: 'POST',
+                    body: formData // FormData automatically sets Content-Type header
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    responseDiv.className = 'response-message success';
+                    responseDiv.textContent = data.message;
+                    // Optionally redirect back to courier panel or show success state
+                    setTimeout(() => {
+                        window.location.href = `/courier.html?courierId=${courierId}`;
+                    }, 3000);
+                } else {
+                    throw new Error(data.error || 'Bilinmeyen bir hata oluştu.');
+                }
+            } catch (error) {
+                responseDiv.className = 'response-message error';
+                responseDiv.textContent = 'Yükleme başarısız: ' + error.message;
+            } finally {
+                responseDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

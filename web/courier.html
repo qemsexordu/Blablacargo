@@ -196,72 +196,91 @@
         const courierStatusToggle = document.getElementById('courierStatusToggle');
         const statusLabel = document.getElementById('statusLabel');
         const courierStats = document.getElementById('courierStats');
-        let courierId = null;
         let isCourierActive = false;
         let locationWatcherId = null;
 
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsHost = window.location.host;
-        const wsUrl = `${wsProtocol}//${wsHost}`;
-        const ws = new WebSocket(wsUrl);
+        // --- New Authentication Flow ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const courierId = urlParams.get('courierId');
 
-        courierStatusToggle.addEventListener('change', () => {
-            isCourierActive = courierStatusToggle.checked;
-            if (isCourierActive) {
-                statusLabel.textContent = 'Aktif';
-                statusLabel.style.color = '#28a745';
-                startLocationTracking();
-                ws.send(JSON.stringify({ type: 'status_update', data: { status: 'active' } }));
-            } else {
-                statusLabel.textContent = 'Pasif';
-                statusLabel.style.color = '#6c757d';
-                stopLocationTracking();
-                ws.send(JSON.stringify({ type: 'status_update', data: { status: 'inactive' } }));
-            }
-        });
+        if (!courierId) {
+            alert('Kurye kimliği bulunamadı. Lütfen giriş yapın.');
+            window.location.href = '/kurye-giris.html';
+        } else {
+            courierIdDisplay.textContent = `Kurye ID: ${courierId}`;
+            initializePanel();
+        }
+        // --- End of New Auth Flow ---
 
-        ws.onopen = function() {
-            console.log('WebSocket bağlantısı kuruldu.');
-            ws.send(JSON.stringify({ type: 'register', data: { role: 'courier' } }));
-        };
+        function initializePanel() {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsHost = window.location.host;
+            const wsUrl = `${wsProtocol}//${wsHost}`;
+            const ws = new WebSocket(wsUrl);
 
-        ws.onmessage = function(event) {
-            const message = JSON.parse(event.data);
-            console.log('Gelen mesaj:', message);
-
-            if (message.type === 'welcome') {
-                courierId = message.message.split('ID\'niz: ')[1];
-                courierIdDisplay.textContent = `Kurye ID: ${courierId}`;
-                fetchCourierStats(); // Fetch initial stats
-            } else if (message.type === 'new_shipment') {
+            courierStatusToggle.addEventListener('change', () => {
+                isCourierActive = courierStatusToggle.checked;
                 if (isCourierActive) {
-                    const shipment = message.data;
-                    displayNewShipment(shipment);
+                    statusLabel.textContent = 'Aktif';
+                    statusLabel.style.color = '#28a745';
+                    startLocationTracking(ws);
+                    ws.send(JSON.stringify({ type: 'status_update', data: { status: 'active' } }));
+                } else {
+                    statusLabel.textContent = 'Pasif';
+                    statusLabel.style.color = '#6c757d';
+                    stopLocationTracking();
+                    ws.send(JSON.stringify({ type: 'status_update', data: { status: 'inactive' } }));
                 }
-            } else if (message.type === 'shipment_taken') {
-                const takenShipmentId = message.data.id;
-                const cardToRemove = document.getElementById(`shipment-${takenShipmentId}`);
-                if (cardToRemove) {
-                    cardToRemove.remove();
-                    if (shipmentsList.children.length === 0) {
-                        shipmentsList.innerHTML = '<p class="no-shipments">Yeni gönderi bildirimleri bekleniyor...</p>';
+            });
+
+            ws.onopen = function() {
+                console.log('WebSocket bağlantısı kuruldu.');
+                // Register using the ID from the URL
+                ws.send(JSON.stringify({ type: 'register', data: { role: 'courier', id: courierId } }));
+            };
+
+            ws.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                console.log('Gelen mesaj:', message);
+
+                if (message.type === 'welcome') {
+                    // Welcome message is now just a confirmation, no need to parse ID
+                    console.log('Sunucu tarafından hoş geldiniz mesajı alındı.');
+                    fetchCourierStats(); // Fetch initial stats
+                } else if (message.type === 'error') {
+                    alert(`Sunucu hatası: ${message.message}`);
+                    window.location.href = '/kurye-giris.html';
+                } else if (message.type === 'new_shipment') {
+                    if (isCourierActive) {
+                        const shipment = message.data;
+                        displayNewShipment(shipment);
                     }
+                } else if (message.type === 'shipment_taken') {
+                    const takenShipmentId = message.data.id;
+                    const cardToRemove = document.getElementById(`shipment-${takenShipmentId}`);
+                    if (cardToRemove) {
+                        cardToRemove.remove();
+                        if (shipmentsList.children.length === 0) {
+                            shipmentsList.innerHTML = '<p class="no-shipments">Yeni gönderi bildirimleri bekleniyor...</p>';
+                        }
+                    }
+                } else if (message.type === 'stats_updated') {
+                    fetchCourierStats(); // Refresh stats when a new rating is submitted
                 }
-            } else if (message.type === 'stats_updated') {
-                fetchCourierStats(); // Refresh stats when a new rating is submitted
-            }
-        };
+            };
 
-        ws.onclose = function() {
-            console.log('WebSocket bağlantısı kesildi.');
-            courierIdDisplay.textContent = 'Kurye ID: Bağlantı kesildi.';
-            stopLocationTracking();
-        };
+            ws.onclose = function() {
+                console.log('WebSocket bağlantısı kesildi.');
+                courierIdDisplay.textContent = 'Kurye ID: Bağlantı kesildi.';
+                stopLocationTracking();
+            };
 
-        ws.onerror = function(error) {
-            console.error('WebSocket hatası:', error);
-            courierIdDisplay.textContent = 'Kurye ID: Bağlantı hatası!';
-        };
+            ws.onerror = function(error) {
+                console.error('WebSocket hatası:', error);
+                courierIdDisplay.textContent = 'Kurye ID: Bağlantı hatası!';
+            };
+        }
+
 
         async function fetchCourierStats() {
             if (!courierId) return;
@@ -407,7 +426,7 @@
             }
         }
 
-        function startLocationTracking() {
+        function startLocationTracking(ws) {
             if (locationWatcherId) return; // Already watching
             if (!navigator.geolocation) {
                 console.log('Tarayıcınız konum servislerini desteklemiyor.');

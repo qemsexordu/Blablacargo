@@ -127,8 +127,8 @@
         <div id="shipmentDetails">
             <p><strong>Gönderi ID:</strong> <span id="detailShipmentId"></span></p>
             <p><strong>Durum:</strong> <span id="detailStatus"></span></p>
-            <p><strong>Gönderici:</strong> <span id="detailSenderName"></span></p>
-            <p><strong>Alıcı:</strong> <span id="detailReceiverName"></span></p>
+            <p><strong>Gönderici:</strong> <span id="detailSenderName"></span> (<span id="detailSenderPhone"></span>)</p>
+            <p><strong>Alıcı:</strong> <span id="detailReceiverName"></span> (<span id="detailReceiverPhone"></span>)</p>
             <p><strong>Alıcı Adresi:</strong> <span id="detailReceiverAddress"></span></p>
             <p><strong>Paket:</strong> <span id="detailPackageDescription"></span> (<span id="detailPackageSize"></span>, <span id="detailPackageWeight"></span> kg)</p>
             <p><strong>Teslimat Kodu:</strong> <span id="detailDeliveryCode"></span></p>
@@ -201,7 +201,9 @@
             document.getElementById('detailShipmentId').textContent = shipment.id;
             document.getElementById('detailStatus').textContent = shipment.status;
             document.getElementById('detailSenderName').textContent = shipment.sender.name;
+            document.getElementById('detailSenderPhone').textContent = shipment.sender.phone;
             document.getElementById('detailReceiverName').textContent = shipment.receiver.name;
+            document.getElementById('detailReceiverPhone').textContent = shipment.receiver.phone;
             document.getElementById('detailReceiverAddress').textContent = shipment.receiver.address;
             document.getElementById('detailPackageDescription').textContent = shipment.packageDetails.description;
             document.getElementById('detailPackageSize').textContent = shipment.packageDetails.size;

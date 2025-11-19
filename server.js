@@ -16,7 +16,7 @@ const wss = new WebSocketServer({ server });
 
 // Health check endpoint
 app.get('/', (req, res) => {
-    res.status(200).json({ message: 'BlaBlaCargo server is running!' });
+    res.status(200).json({ message: 'KapGel server is running!' });
 });
 
 // ---- In-Memory Database ----
@@ -33,7 +33,11 @@ async function geocodeAddress(address) {
             params: {
                 q: address,
                 format: 'json',
-'User-Agent': 'KapGel/1.0'
+                limit: 1
+            },
+            headers: {
+                'User-Agent': 'KapGel/1.0'
+            }
         });
         if (response.data && response.data.length > 0) {
             return {
@@ -58,7 +62,7 @@ async function reverseGeocode(lat, lon) {
                 format: 'json'
             },
             headers: {
-                'User-Agent': 'Blablacargo/1.0'
+                'User-Agent': 'KapGel/1.0'
             }
         });
         if (response.data && response.data.display_name) {

@@ -1,0 +1,20 @@
+{
+  "short_name": "BlaBlaCargo",
+  "name": "BlaBlaCargo - Hızlı Kargo",
+  "start_url": "/sender.html",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#4A90E2",
+  "icons": [
+    {
+      "src": "images/icon-192.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192"
+    },
+    {
+      "src": "images/icon-512.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ]
+}

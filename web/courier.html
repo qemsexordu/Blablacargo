@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>blabla kargo - Kurye Paneli</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align items to the start for scrolling */
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .status-switch-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        #statusLabel {
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+        .status-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .status-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+        input:checked + .slider {
+            background-color: #28a745;
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px #28a745;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .slider.round {
+            border-radius: 34px;
+        }
+        .slider.round:before {
+            border-radius: 50%;
+        }
+        #courierIdDisplay {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #555;
+        }
+        #shipmentsList {
+            margin-top: 20px;
+            display: grid;
+            gap: 20px;
+        }
+        .shipment-card {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease-in-out;
+        }
+        .shipment-card:hover {
+            transform: translateY(-3px);
+        }
+        .shipment-card h3 {
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.4em;
+        }
+        .shipment-card p {
+            margin-bottom: 5px;
+            line-height: 1.5;
+        }
+        .shipment-card .status {
+            font-weight: bold;
+            color: #28a745; /* Default to success color */
+        }
+        .shipment-card .actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        .shipment-card button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .shipment-card .accept-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        .shipment-card .accept-btn:hover {
+            background-color: #218838;
+        }
+        .shipment-card .reject-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        .shipment-card .reject-btn:hover {
+            background-color: #c82333;
+        }
+        .no-shipments {
+            text-align: center;
+            color: #6c757d;
+            margin-top: 30px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kurye Paneli</h1>
+        <div class="status-switch-container">
+            <label class="status-switch">
+                <input type="checkbox" id="courierStatusToggle">
+                <span class="slider round"></span>
+            </label>
+            <span id="statusLabel">Pasif</span>
+        </div>
+        <div id="courierStats" style="text-align: center; margin-bottom: 20px; font-size: 1.1em;"></div>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button id="viewFeedbackBtn" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em;">Geri Bildirimleri Gör</button>
+        </div>
+        <div id="feedbackSection" style="display: none; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+            <h2 style="text-align: center; color: #007bff; margin-bottom: 20px;">Müşteri Geri Bildirimleri</h2>
+            <div id="feedbackList">
+                <p style="text-align: center; color: #6c757d;">Henüz geri bildirim bulunmuyor.</p>
+            </div>
+        </div>
+        <p id="courierIdDisplay">Kurye ID: Bağlanıyor...</p>
+        <div id="shipmentsList">
+            <p class="no-shipments">Yeni gönderi bildirimleri bekleniyor...</p>
+        </div>
+    </div>
+
+    <script>
+        const shipmentsList = document.getElementById('shipmentsList');
+        const courierIdDisplay = document.getElementById('courierIdDisplay');
+        const courierStatusToggle = document.getElementById('courierStatusToggle');
+        const statusLabel = document.getElementById('statusLabel');
+        const courierStats = document.getElementById('courierStats');
+        let courierId = null;
+        let isCourierActive = false;
+        let locationWatcherId = null;
+
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsHost = window.location.host;
+        const wsUrl = `${wsProtocol}//${wsHost}`;
+        const ws = new WebSocket(wsUrl);
+
+        courierStatusToggle.addEventListener('change', () => {
+            isCourierActive = courierStatusToggle.checked;
+            if (isCourierActive) {
+                statusLabel.textContent = 'Aktif';
+                statusLabel.style.color = '#28a745';
+                startLocationTracking();
+                ws.send(JSON.stringify({ type: 'status_update', data: { status: 'active' } }));
+            } else {
+                statusLabel.textContent = 'Pasif';
+                statusLabel.style.color = '#6c757d';
+                stopLocationTracking();
+                ws.send(JSON.stringify({ type: 'status_update', data: { status: 'inactive' } }));
+            }
+        });
+
+        ws.onopen = function() {
+            console.log('WebSocket bağlantısı kuruldu.');
+            ws.send(JSON.stringify({ type: 'register', data: { role: 'courier' } }));
+        };
+
+        ws.onmessage = function(event) {
+            const message = JSON.parse(event.data);
+            console.log('Gelen mesaj:', message);
+
+            if (message.type === 'welcome') {
+                courierId = message.message.split('ID\'niz: ')[1];
+                courierIdDisplay.textContent = `Kurye ID: ${courierId}`;
+                fetchCourierStats(); // Fetch initial stats
+            } else if (message.type === 'new_shipment') {
+                if (isCourierActive) {
+                    const shipment = message.data;
+                    displayNewShipment(shipment);
+                }
+            } else if (message.type === 'shipment_taken') {
+                const takenShipmentId = message.data.id;
+                const cardToRemove = document.getElementById(`shipment-${takenShipmentId}`);
+                if (cardToRemove) {
+                    cardToRemove.remove();
+                    if (shipmentsList.children.length === 0) {
+                        shipmentsList.innerHTML = '<p class="no-shipments">Yeni gönderi bildirimleri bekleniyor...</p>';
+                    }
+                }
+            } else if (message.type === 'stats_updated') {
+                fetchCourierStats(); // Refresh stats when a new rating is submitted
+            }
+        };
+
+        ws.onclose = function() {
+            console.log('WebSocket bağlantısı kesildi.');
+            courierIdDisplay.textContent = 'Kurye ID: Bağlantı kesildi.';
+            stopLocationTracking();
+        };
+
+        ws.onerror = function(error) {
+            console.error('WebSocket hatası:', error);
+            courierIdDisplay.textContent = 'Kurye ID: Bağlantı hatası!';
+        };
+
+        async function fetchCourierStats() {
+            if (!courierId) return;
+            try {
+                const response = await fetch(`/couriers/${courierId}/stats`);
+                const stats = await response.json();
+                if (response.ok) {
+                    courierStats.innerHTML = `⭐ <strong>${stats.averageRating}</strong> (${stats.totalRatings} değerlendirme)`;
+                } else {
+                    courierStats.textContent = 'Puan bilgisi alınamadı.';
+                }
+            } catch (error) {
+                console.error('İstatistikler alınırken hata oluştu:', error);
+                courierStats.textContent = 'Puan bilgisi alınamadı.';
+            }
+        }
+
+        const viewFeedbackBtn = document.getElementById('viewFeedbackBtn');
+        const feedbackSection = document.getElementById('feedbackSection');
+        const feedbackList = document.getElementById('feedbackList');
+
+        viewFeedbackBtn.addEventListener('click', () => {
+            if (feedbackSection.style.display === 'none') {
+                fetchCourierFeedback();
+                feedbackSection.style.display = 'block';
+                viewFeedbackBtn.textContent = 'Geri Bildirimleri Gizle';
+            } else {
+                feedbackSection.style.display = 'none';
+                viewFeedbackBtn.textContent = 'Geri Bildirimleri Gör';
+            }
+        });
+
+        async function fetchCourierFeedback() {
+            if (!courierId) return;
+            try {
+                const response = await fetch(`/couriers/${courierId}/feedback`);
+                const data = await response.json();
+                if (response.ok) {
+                    feedbackList.innerHTML = ''; // Clear previous feedback
+                    if (data.feedback && data.feedback.length > 0) {
+                        data.feedback.forEach(f => {
+                            const feedbackItem = document.createElement('div');
+                            feedbackItem.className = 'shipment-card'; // Re-use card styling
+                            feedbackItem.style.marginBottom = '10px';
+                            feedbackItem.innerHTML = `
+                                <h3>Gönderi ID: ${f.shipmentId}</h3>
+                                <p><strong>Puan:</strong> ${'⭐'.repeat(f.rating)}</p>
+                                <p><strong>Yorum:</strong> ${f.comment}</p>
+                                <p><strong>Gönderen:</strong> ${f.sender}</p>
+                                <p style="font-size: 0.8em; color: #6c757d;">Tarih: ${new Date(f.createdAt).toLocaleString()}</p>
+                            `;
+                            feedbackList.appendChild(feedbackItem);
+                        });
+                    } else {
+                        feedbackList.innerHTML = '<p style="text-align: center; color: #6c757d;">Bu kurye için henüz bir geri bildirim bulunmuyor.</p>';
+                    }
+                } else {
+                    feedbackList.innerHTML = `<p style="text-align: center; color: #dc3545;">Geri bildirimler alınırken hata oluştu: ${data.message || 'Bilinmeyen Hata'}</p>`;
+                }
+            } catch (error) {
+                console.error('Geri bildirimler alınırken hata oluştu:', error);
+                feedbackList.innerHTML = '<p style="text-align: center; color: #dc3545;">Sunucuya bağlanırken hata oluştu.</p>';
+            }
+        }
+
+        function displayNewShipment(shipment) {
+            const noShipmentsMessage = shipmentsList.querySelector('.no-shipments');
+            if (noShipmentsMessage) {
+                noShipmentsMessage.remove();
+            }
+            const breakdown = shipment.earnings_breakdown;
+            const shipmentCard = document.createElement('div');
+            shipmentCard.id = `shipment-${shipment.id}`;
+            shipmentCard.className = 'shipment-card';
+            shipmentCard.innerHTML = `
+                <h3>Yeni Gönderi: ${shipment.id}</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <p><strong>Gönderici:</strong> ${shipment.sender.name}</p>
+                        <p><strong>Alıcı:</strong> ${shipment.receiver.name}</p>
+                        <p><strong>Teslimat Adresi:</strong> ${shipment.receiver.address}</p>
+                        <p><strong>Paket:</strong> ${shipment.packageDetails.description} (${shipment.packageDetails.size})</p>
+                    </div>
+                    <div style="border-left: 2px solid #007bff; padding-left: 15px;">
+                        <h4 style="margin-top: 0; margin-bottom: 10px; color: #155724;">Tahmini Net Kârınız:</h4>
+                        <p style="font-size: 2em; font-weight: bold; color: #28a745; margin: 0;">${breakdown.kurye_net_kar} TL</p>
+                        <details style="margin-top: 10px; font-size: 0.9em; cursor: pointer;">
+                            <summary>Kazanç Detayları</summary>
+                            <ul style="list-style-type: none; padding-left: 10px; margin-top: 5px;">
+                                <li>Müşteri Fiyatı: ${breakdown.musteri_fiyati} TL</li>
+                                <li>Brüt Kazanç: ${breakdown.kurye_brut_kazanc} TL</li>
+                                <li>Tahmini Yakıt: -${breakdown.tahmini_yakit_gideri} TL</li>
+                                <li>Diğer Giderler: -${breakdown.diger_giderler} TL</li>
+                                <hr style="border-top: 1px solid #ccc; margin: 4px 0;">
+                                <li>Şirket Net Kârı: ${breakdown.sirket_net_kari} TL</li>
+                                <li>SMA'lı çocukların tedavisine olan katkınız: ${breakdown.sma_tedavisi_katkisi} TL</li>
+                            </ul>
+                        </details>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button class="accept-btn" data-shipment-id="${shipment.id}">Kabul Et</button>
+                    <button class="reject-btn" data-shipment-id="${shipment.id}">Reddet</button>
+                </div>
+            `;
+            shipmentsList.prepend(shipmentCard);
+            shipmentCard.querySelector('.accept-btn').addEventListener('click', () => acceptShipment(shipment.id));
+            shipmentCard.querySelector('.reject-btn').addEventListener('click', () => rejectShipment(shipment.id));
+        }
+
+        async function acceptShipment(shipmentId) {
+            if (!courierId) {
+                alert('Kurye ID\'si mevcut değil. Lütfen tekrar bağlanmayı deneyin.');
+                return;
+            }
+            try {
+                const response = await fetch(`/shipments/${shipmentId}/accept`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ courierId: courierId })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    alert(`Gönderi ${shipmentId} başarıyla kabul edildi!`);
+                    window.location.href = `courier_active_job.html?shipmentId=${shipmentId}`;
+                } else {
+                    alert(`Gönderi kabul edilirken hata oluştu: ${data.error}`);
+                }
+            } catch (error) {
+                alert('Sunucuya bağlanırken hata oluştu.');
+                console.error('Accept shipment error:', error);
+            }
+        }
+
+        function rejectShipment(shipmentId) {
+            alert(`Gönderi ${shipmentId} reddedildi.`);
+            const cardToRemove = document.getElementById(`shipment-${shipmentId}`);
+            if (cardToRemove) {
+                cardToRemove.remove();
+                if (shipmentsList.children.length === 0) {
+                    shipmentsList.innerHTML = '<p class="no-shipments">Yeni gönderi bildirimleri bekleniyor...</p>';
+                }
+            }
+        }
+
+        function startLocationTracking() {
+            if (locationWatcherId) return; // Already watching
+            if (!navigator.geolocation) {
+                console.log('Tarayıcınız konum servislerini desteklemiyor.');
+                return;
+            }
+            console.log('Konum takibi başlatılıyor...');
+            locationWatcherId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    console.log(`Konum güncellendi: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+                    if (ws.readyState === ws.OPEN && courierId && isCourierActive) {
+                        ws.send(JSON.stringify({
+                            type: 'location_update',
+                            data: { latitude, longitude }
+                        }));
+                    }
+                },
+                (error) => {
+                    console.error(`Konum alınamadı: ${error.message}`);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        function stopLocationTracking() {
+            if (locationWatcherId) {
+                console.log('Konum takibi durduruluyor...');
+                navigator.geolocation.clearWatch(locationWatcherId);
+                locationWatcherId = null;
+            }
+        }
+    </script>
+<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker kaydı başarılı:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker kaydı başarısız:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

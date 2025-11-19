@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>blabla kargo - Gönderi Oluştur</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .response-message {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: center;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        .response-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .response-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        #tracker {
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        #map {
+            height: 300px;
+            width: 100%;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gönderi Oluştur</h1>
+        <form id="shipmentForm">
+            <h2>Gönderici Bilgileri</h2>
+            <div class="form-group">
+                <label for="senderName">Ad Soyad / Firma Adı</label>
+                <input type="text" id="senderName" name="senderName" required>
+            </div>
+            <div class="form-group">
+                <label for="senderAddress">Adres</label>
+                <textarea id="senderAddress" name="senderAddress" rows="3" required></textarea>
+            </div>
+            <button type="button" id="useSenderLocation" style="margin-bottom: 15px; background-color: #28a745;">Konumumu Kullan</button>
+            <div class="form-group" style="display: none;">
+                <label for="senderLatitude">Gönderici Enlem (Latitude)</label>
+                <input type="hidden" id="senderLatitude" name="senderLatitude" required placeholder="41.0082">
+            </div>
+            <div class="form-group" style="display: none;">
+                <label for="senderLongitude">Gönderici Boylam (Longitude)</label>
+                <input type="hidden" id="senderLongitude" name="senderLongitude" required placeholder="28.9784">
+            </div>
+
+            <h2>Alıcı Bilgileri</h2>
+            <div class="form-group">
+                <label for="receiverName">Ad Soyad / Firma Adı</label>
+                <input type="text" id="receiverName" name="receiverName" required>
+            </div>
+            <div class="form-group">
+                <label for="receiverAddress">Adres</label>
+                <textarea id="receiverAddress" name="receiverAddress" rows="3" required></textarea>
+            </div>
+
+            <h2>Paket Detayları</h2>
+            <div class="form-group">
+                <label for="packageDescription">Açıklama</label>
+                <input type="text" id="packageDescription" name="packageDescription" required>
+            </div>
+            <div class="form-group">
+                <label for="packageWeight">Ağırlık (kg)</label>
+                <input type="text" id="packageWeight" name="packageWeight" required>
+            </div>
+            <div class="form-group">
+                <label for="packageSize">Boyut</label>
+                <select id="packageSize" name="packageSize" required>
+                    <option value="">Seçiniz</option>
+                    <option value="Zarf">Zarf</option>
+                    <option value="Küçük">Küçük</option>
+                    <option value="Orta">Orta</option>
+                    <option value="Büyük">Büyük</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-top: 25px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f8f9fa;">
+                <label for="termsCheckbox" style="display: flex; align-items: center; font-weight: normal; color: #333;">
+                    <input type="checkbox" id="termsCheckbox" required style="width: auto; margin-right: 10px;">
+                    <span>Gönderdiğim paketin içeriğinin yasalara uygun olduğunu, belirttiğim açıklama ile eşleştiğini ve tüm yasal sorumluluğun bana ait olduğunu kabul ediyorum.</span>
+                </label>
+            </div>
+
+            <button type="submit" id="submitBtn" disabled>Gönderi Oluştur</button>
+        </form>
+        <div id="response" class="response-message" style="display: none;"></div>
+        
+        <div id="tracker" style="display: none;">
+            <h2>Kurye Takip</h2>
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        let map = null;
+        let courierMarker = null;
+        let senderMarker = null;
+
+        const termsCheckbox = document.getElementById('termsCheckbox');
+        const submitBtn = document.getElementById('submitBtn');
+
+        termsCheckbox.addEventListener('change', function() {
+            submitBtn.disabled = !this.checked;
+        });
+
+        document.getElementById('shipmentForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const responseDiv = document.getElementById('response');
+            responseDiv.style.display = 'none';
+            responseDiv.className = 'response-message';
+
+            const sender = {
+                name: document.getElementById('senderName').value,
+                address: document.getElementById('senderAddress').value,
+                latitude: parseFloat(document.getElementById('senderLatitude').value),
+                longitude: parseFloat(document.getElementById('senderLongitude').value)
+            };
+            const receiver = {
+                name: document.getElementById('receiverName').value,
+                address: document.getElementById('receiverAddress').value
+            };
+            const packageDetails = {
+                description: document.getElementById('packageDescription').value,
+                weight: document.getElementById('packageWeight').value,
+                size: document.getElementById('packageSize').value
+            };
+
+            try {
+                const apiResponse = await fetch('/shipments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sender, receiver, packageDetails })
+                });
+
+                const data = await apiResponse.json();
+
+                if (apiResponse.ok) {
+                    responseDiv.classList.add('success');
+                    responseDiv.innerHTML = `Gönderi başarıyla oluşturuldu!<br>Gönderi ID: <strong>${data.shipment.id}</strong><br>Fiyat: <strong>${data.shipment.price} TL</strong><br>Bu gönderinizle SMA'lı çocukların tedavisine <strong>${data.shipment.earnings_breakdown.sma_tedavisi_katkisi} TL</strong> katkıda bulundunuz. Teşekkür ederiz!<br>Durum: ${data.shipment.status}.<br>Kurye bekleniyor...`;
+                    
+                    // Start WebSocket connection for tracking
+                    startTracking(data.shipment.id, sender.latitude, sender.longitude);
+                } else {
+                    responseDiv.classList.add('error');
+                    responseDiv.innerHTML = `Hata: ${data.error || 'Gönderi oluşturulamadı.'}`;
+                }
+            } catch (error) {
+                responseDiv.classList.add('error');
+                responseDiv.innerHTML = `Bağlantı hatası: Sunucuya ulaşılamadı. Sunucunun çalıştığından emin olun.`;
+                console.error('Fetch error:', error);
+            } finally {
+                responseDiv.style.display = 'block';
+            }
+        });
+
+        function startTracking(shipmentId, senderLat, senderLng) {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsHost = window.location.host;
+            const wsUrl = `${wsProtocol}//${wsHost}`;
+            const ws = new WebSocket(wsUrl);
+
+            ws.onopen = function() {
+                console.log('WebSocket bağlantısı BAŞARILI.');
+                // Register this client as a sender for a specific shipment
+                ws.send(JSON.stringify({
+                    type: 'register',
+                    data: {
+                        role: 'sender',
+                        id: shipmentId
+                    }
+                }));
+            };
+
+            ws.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                console.log('Gelen Mesaj:', message);
+
+                if (message.type === 'shipment_accepted') {
+                    document.getElementById('response').innerHTML += '<br><strong>Bir kurye gönderinizi kabul etti!</strong>';
+                    document.getElementById('tracker').style.display = 'block';
+                    initMap(senderLat, senderLng);
+                } else if (message.type === 'courier_location_update') {
+                    const { latitude, longitude } = message.data;
+                    if (map && courierMarker) {
+                        courierMarker.setLatLng([latitude, longitude]);
+                        map.panTo([latitude, longitude]);
+                    } else if (map) {
+                        courierMarker = L.marker([latitude, longitude]).addTo(map)
+                            .bindPopup('Kurye')
+                            .openPopup();
+                    }
+                }
+            };
+
+            ws.onclose = function() {
+                console.log('WebSocket bağlantısı KAPANDI.');
+            };
+
+            ws.onerror = function(error) {
+                console.error('WebSocket HATASI:', error);
+            };
+        }
+
+        function initMap(senderLat, senderLng) {
+            if (map) return;
+            map = L.map('map').setView([senderLat, senderLng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            senderMarker = L.marker([senderLat, senderLng]).addTo(map).bindPopup('Sizin Konumunuz');
+        }
+
+        document.getElementById('useSenderLocation').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    document.getElementById('senderLatitude').value = position.coords.latitude;
+                    document.getElementById('senderLongitude').value = position.coords.longitude;
+                    
+                    const senderAddress = document.getElementById('senderAddress');
+                    senderAddress.value = "Konum bilgisi kullanılıyor. Adres gerekmez.";
+                    senderAddress.disabled = true; // Disable address field
+                    senderAddress.required = false; // Remove required attribute
+
+                    alert('Konumunuz başarıyla alındı.');
+                }, function(error) {
+                    alert('Konum alınamadı: ' + error.message);
+                });
+            } else {
+                alert('Tarayıcınız konum servislerini desteklemiyor.');
+            }
+        });
+    </script>
+<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker kaydı başarılı:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker kaydı başarısız:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

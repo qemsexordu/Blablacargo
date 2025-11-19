@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>blabla kargo - Teslimat Onayı</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 40px 50px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+        button:hover {
+            background-color: #218838;
+            transform: translateY(-1px);
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .message {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            word-wrap: break-word;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .stars {
+            cursor: pointer;
+            font-size: 2.5em;
+            color: #ccc;
+        }
+        .star:hover,
+        .star.selected {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Teslimat Onayı</h1>
+        <p>Lütfen paketi teslim aldıysanız aşağıdaki butona basarak onaylayınız.</p>
+        <button id="confirmBtn">Teslim Aldığımı Onaylıyorum</button>
+        <div id="response" class="message" style="display: none;"></div>
+
+        <div id="ratingSection" style="display: none; margin-top: 30px; text-align: left;">
+            <h3>Kuryeyi Değerlendir</h3>
+            <div class="stars" data-rating="0">
+                <span class="star" data-value="1">&#9733;</span>
+                <span class="star" data-value="2">&#9733;</span>
+                <span class="star" data-value="3">&#9733;</span>
+                <span class="star" data-value="4">&#9733;</span>
+                <span class="star" data-value="5">&#9733;</span>
+            </div>
+            <textarea id="comment" placeholder="Yorumunuz (isteğe bağlı)" style="width: 100%; min-height: 80px; margin-top: 15px; padding: 10px; border-radius: 5px; border: 1px solid #ccc;"></textarea>
+            <button id="submitRatingBtn" style="margin-top: 15px;">Değerlendirmeyi Gönder</button>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const confirmBtn = document.getElementById('confirmBtn');
+        const responseDiv = document.getElementById('response');
+        const ratingSection = document.getElementById('ratingSection');
+        const starsContainer = document.querySelector('.stars');
+        const stars = document.querySelectorAll('.star');
+        const commentInput = document.getElementById('comment');
+        const submitRatingBtn = document.getElementById('submitRatingBtn');
+        let shipmentIdForRating = null;
+
+        if (!token) {
+            confirmBtn.disabled = true;
+            responseDiv.className = 'message error';
+            responseDiv.textContent = 'Hata: Onay anahtarı (token) bulunamadı.';
+            responseDiv.style.display = 'block';
+        }
+
+        confirmBtn.addEventListener('click', async function() {
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'İşleniyor...';
+
+            try {
+                const response = await fetch('/shipments/confirm-delivery', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: token })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    responseDiv.className = 'message success';
+                    responseDiv.innerHTML = `<strong>Başarılı!</strong><br>Teslimat onaylandı. Lütfen kuryeyi değerlendirin.`;
+                    confirmBtn.style.display = 'none';
+                    ratingSection.style.display = 'block';
+                    shipmentIdForRating = data.shipment.id;
+                } else {
+                    throw new Error(data.error || 'Onay işlemi gerçekleştirilemedi.');
+                }
+            } catch (error) {
+                responseDiv.className = 'message error';
+                responseDiv.textContent = `Hata: ${error.message}`;
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Tekrar Dene';
+                console.error('Confirmation error:', error);
+            } finally {
+                responseDiv.style.display = 'block';
+            }
+        });
+
+        // --- Rating Logic ---
+
+        starsContainer.addEventListener('click', e => {
+            if (e.target.classList.contains('star')) {
+                const rating = e.target.dataset.value;
+                starsContainer.dataset.rating = rating;
+                updateStars(rating);
+            }
+        });
+
+        starsContainer.addEventListener('mouseover', e => {
+            if (e.target.classList.contains('star')) {
+                updateStars(e.target.dataset.value);
+            }
+        });
+
+        starsContainer.addEventListener('mouseout', () => {
+            updateStars(starsContainer.dataset.rating);
+        });
+
+        function updateStars(rating) {
+            stars.forEach(star => {
+                if (star.dataset.value <= rating) {
+                    star.classList.add('selected');
+                } else {
+                    star.classList.remove('selected');
+                }
+            });
+        }
+
+        submitRatingBtn.addEventListener('click', async () => {
+            const rating = parseInt(starsContainer.dataset.rating, 10);
+            const comment = commentInput.value;
+
+            if (rating === 0) {
+                alert('Lütfen 1-5 arası bir puan verin.');
+                return;
+            }
+            if (!shipmentIdForRating) {
+                alert('Değerlendirilecek gönderi ID\'si bulunamadı.');
+                return;
+            }
+
+            submitRatingBtn.disabled = true;
+            submitRatingBtn.textContent = 'Gönderiliyor...';
+
+            try {
+                const response = await fetch(`/shipments/${shipmentIdForRating}/rate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rating, comment })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    ratingSection.innerHTML = '<p style="text-align: center; font-weight: bold; color: #155724;">Değerlendirmeniz için teşekkür ederiz!</p>';
+                } else {
+                    throw new Error(data.error || 'Değerlendirme gönderilemedi.');
+                }
+
+            } catch (error) {
+                alert(`Hata: ${error.message}`);
+                submitRatingBtn.disabled = false;
+                submitRatingBtn.textContent = 'Değerlendirmeyi Gönder';
+            }
+        });
+    </script>
+<script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker kaydı başarılı:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker kaydı başarısız:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

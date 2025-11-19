@@ -34,29 +34,30 @@
             font-size: 28px;
             font-weight: 600;
         }
-        .status-switch-container {
+        .status-toggle {
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             margin-bottom: 20px;
-            gap: 10px;
         }
-        #statusLabel {
+        .status-toggle-label {
             font-size: 1.2em;
             font-weight: 500;
+            color: #555;
+            margin-right: 15px;
         }
-        .status-switch {
+        .toggle-switch {
             position: relative;
             display: inline-block;
             width: 60px;
             height: 34px;
         }
-        .status-switch input {
+        .toggle-switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-        .slider {
+        .toggle-slider {
             position: absolute;
             cursor: pointer;
             top: 0;
@@ -65,8 +66,9 @@
             bottom: 0;
             background-color: #ccc;
             transition: .4s;
+            border-radius: 34px;
         }
-        .slider:before {
+        .toggle-slider:before {
             position: absolute;
             content: "";
             height: 26px;
@@ -75,117 +77,121 @@
             bottom: 4px;
             background-color: white;
             transition: .4s;
-        }
-        input:checked + .slider {
-            background-color: #28a745;
-        }
-        input:focus + .slider {
-            box-shadow: 0 0 1px #28a745;
-        }
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-        .slider.round {
-            border-radius: 34px;
-        }
-        .slider.round:before {
             border-radius: 50%;
         }
-        #courierIdDisplay {
+        input:checked + .toggle-slider {
+            background-color: #28a745;
+        }
+        input:focus + .toggle-slider {
+            box-shadow: 0 0 1px #28a745;
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .rating-display {
             text-align: center;
             margin-bottom: 20px;
-            font-size: 1.1em;
-            font-weight: 500;
-            color: #555;
+            padding: 15px;
+            background-color: #e9f7ef;
+            border-radius: 8px;
+            border: 1px solid #d4edda;
         }
-        #shipmentsList {
-            margin-top: 20px;
-            display: grid;
-            gap: 20px;
+        .rating-display h2 {
+            color: #28a745;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.5em;
         }
-        .shipment-card {
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            height: 20px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #28a745;
+            width: 0%; /* Will be set by JS */
+            border-radius: 5px;
+            text-align: center;
+            color: white;
+            line-height: 20px;
+            font-size: 0.9em;
+            transition: width 0.5s ease-in-out;
+        }
+        .feedback-section {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .feedback-section h2 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+        .feedback-item {
             background-color: #f8f9fa;
             border: 1px solid #e9ecef;
             border-radius: 8px;
-            padding: 20px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s ease-in-out;
-        }
-        .shipment-card:hover {
-            transform: translateY(-3px);
-        }
-        .shipment-card h3 {
-            color: #007bff;
-            margin-top: 0;
+            padding: 15px;
             margin-bottom: 10px;
-            font-size: 1.4em;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
-        .shipment-card p {
-            margin-bottom: 5px;
-            line-height: 1.5;
+        .feedback-item p {
+            margin: 5px 0;
         }
-        .shipment-card .status {
+        .feedback-item .rating {
             font-weight: bold;
-            color: #28a745; /* Default to success color */
+            color: #ffc107;
         }
-        .shipment-card .actions {
-            margin-top: 15px;
-            display: flex;
-            gap: 10px;
+        .feedback-item .comment {
+            font-style: italic;
+            color: #555;
         }
-        .shipment-card button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 500;
-            transition: background-color 0.2s ease-in-out;
-        }
-        .shipment-card .accept-btn {
-            background-color: #28a745;
-            color: white;
-        }
-        .shipment-card .accept-btn:hover {
-            background-color: #218838;
-        }
-        .shipment-card .reject-btn {
-            background-color: #dc3545;
-            color: white;
-        }
-        .shipment-card .reject-btn:hover {
-            background-color: #c82333;
-        }
-        .no-shipments {
-            text-align: center;
+        .feedback-item .meta {
+            font-size: 0.8em;
             color: #6c757d;
-            margin-top: 30px;
-            font-size: 1.2em;
+            text-align: right;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Kurye Paneli</h1>
-        <div class="status-switch-container">
-            <label class="status-switch">
+        <div class="status-toggle">
+            <span class="status-toggle-label" id="statusLabel">Pasif</span>
+            <label class="toggle-switch">
                 <input type="checkbox" id="courierStatusToggle">
-                <span class="slider round"></span>
+                <span class="toggle-slider"></span>
             </label>
-            <span id="statusLabel">Pasif</span>
         </div>
-        <div id="courierStats" style="text-align: center; margin-bottom: 20px; font-size: 1.1em;"></div>
-        <div style="text-align: center; margin-bottom: 20px;">
-            <button id="viewFeedbackBtn" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em;">Geri Bildirimleri Gör</button>
+        <div id="courierIdDisplay" style="text-align: center; margin-bottom: 20px; font-size: 1.1em; font-weight: 500; color: #555;">Kurye ID: Bağlanıyor...</div>
+        
+        <div id="courierStats" class="rating-display">
+            <h2>Kurye Değerlendirmesi</h2>
+            <p>Ortalama Puan: <span id="averageRatingDisplay">0.00</span> (<span id="totalRatingsDisplay">0</span> değerlendirme)</p>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="ratingProgressBar"></div>
+            </div>
         </div>
-        <div id="feedbackSection" style="display: none; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-            <h2 style="text-align: center; color: #007bff; margin-bottom: 20px;">Müşteri Geri Bildirimleri</h2>
+
+        <div id="verificationStatusDisplay" style="text-align: center; margin-bottom: 20px; font-size: 1.1em; font-weight: bold;"></div>
+        <div id="verificationActionButton" style="text-align: center; margin-bottom: 20px; display: none;">
+            <button id="goToVerificationBtn" style="padding: 10px 20px; background-color: #ffc107; color: #333; border: none; border-radius: 5px; cursor: pointer; font-size: 1em;">Kimlik Doğrulama Sayfasına Git</button>
+        </div>
+
+        <div class="feedback-section">
+            <h2>Müşteri Geri Bildirimleri</h2>
             <div id="feedbackList">
                 <p style="text-align: center; color: #6c757d;">Henüz geri bildirim bulunmuyor.</p>
             </div>
         </div>
-        <p id="courierIdDisplay">Kurye ID: Bağlanıyor...</p>
-        <div id="shipmentsList">
+        
+        <div id="shipmentsList" style="margin-top: 30px;">
+            <h2 style="text-align: center; color: #007bff; margin-bottom: 20px;">Yeni Gönderi Bildirimleri</h2>
             <p class="no-shipments">Yeni gönderi bildirimleri bekleniyor...</p>
         </div>
     </div>
@@ -195,7 +201,9 @@
         const courierIdDisplay = document.getElementById('courierIdDisplay');
         const courierStatusToggle = document.getElementById('courierStatusToggle');
         const statusLabel = document.getElementById('statusLabel');
-        const courierStats = document.getElementById('courierStats');
+        const averageRatingDisplay = document.getElementById('averageRatingDisplay');
+        const totalRatingsDisplay = document.getElementById('totalRatingsDisplay');
+        const ratingProgressBar = document.getElementById('ratingProgressBar');
         let isCourierActive = false;
         let locationWatcherId = null;
 
@@ -288,13 +296,29 @@
                 const response = await fetch(`/couriers/${courierId}/stats`);
                 const stats = await response.json();
                 if (response.ok) {
-                    courierStats.innerHTML = `⭐ <strong>${stats.averageRating}</strong> (${stats.totalRatings} değerlendirme)`;
+                    const averageRating = parseFloat(stats.averageRating);
+                    const totalRatings = parseInt(stats.totalRatings);
+
+                    averageRatingDisplay.textContent = averageRating.toFixed(2);
+                    totalRatingsDisplay.textContent = totalRatings;
+
+                    // Update progress bar (assuming max rating is 5)
+                    const progressBarWidth = (averageRating / 5) * 100;
+                    ratingProgressBar.style.width = `${progressBarWidth}%`;
+                    ratingProgressBar.textContent = `${averageRating.toFixed(1)} / 5`;
+
                 } else {
-                    courierStats.textContent = 'Puan bilgisi alınamadı.';
+                    averageRatingDisplay.textContent = '0.00';
+                    totalRatingsDisplay.textContent = '0';
+                    ratingProgressBar.style.width = '0%';
+                    ratingProgressBar.textContent = '';
                 }
             } catch (error) {
                 console.error('İstatistikler alınırken hata oluştu:', error);
-                courierStats.textContent = 'Puan bilgisi alınamadı.';
+                averageRatingDisplay.textContent = '0.00';
+                totalRatingsDisplay.textContent = '0';
+                ratingProgressBar.style.width = '0%';
+                ratingProgressBar.textContent = '';
             }
         }
 
@@ -323,14 +347,12 @@
                     if (data.feedback && data.feedback.length > 0) {
                         data.feedback.forEach(f => {
                             const feedbackItem = document.createElement('div');
-                            feedbackItem.className = 'shipment-card'; // Re-use card styling
-                            feedbackItem.style.marginBottom = '10px';
+                            feedbackItem.className = 'feedback-item';
                             feedbackItem.innerHTML = `
-                                <h3>Gönderi ID: ${f.shipmentId}</h3>
-                                <p><strong>Puan:</strong> ${'⭐'.repeat(f.rating)}</p>
-                                <p><strong>Yorum:</strong> ${f.comment}</p>
-                                <p><strong>Gönderen:</strong> ${f.sender}</p>
-                                <p style="font-size: 0.8em; color: #6c757d;">Tarih: ${new Date(f.createdAt).toLocaleString()}</p>
+                                <p><strong>Gönderi ID:</strong> ${f.shipmentId}</p>
+                                <p class="rating"><strong>Puan:</strong> ${'⭐'.repeat(f.rating)}</p>
+                                <p class="comment"><strong>Yorum:</strong> ${f.comment}</p>
+                                <p class="meta">Gönderen: ${f.sender} - ${new Date(f.createdAt).toLocaleString()}</p>
                             `;
                             feedbackList.appendChild(feedbackItem);
                         });

@@ -134,9 +134,9 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // On successful login, redirect to the main courier panel
-                    // Pass the courierId to the panel
-                    window.location.href = `/courier.html?courierId=${data.courierId}`;
+                    // On successful login, save courierId to localStorage and redirect to the main courier panel
+                    localStorage.setItem('courierId', data.courierId);
+                    window.location.href = '/courier.html';
                 } else {
                     throw new Error(data.error || 'Bilinmeyen bir hata oluştu.');
                 }

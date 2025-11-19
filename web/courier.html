@@ -234,8 +234,16 @@
         };
 
         // --- New Authentication Flow ---
-        const urlParams = new URLSearchParams(window.location.search);
-        const courierId = urlParams.get('courierId');
+        let courierId = localStorage.getItem('courierId');
+
+        if (!courierId) {
+            // If not in localStorage, check URL params (fallback for older links or initial login)
+            const urlParams = new URLSearchParams(window.location.search);
+            courierId = urlParams.get('courierId');
+            if (courierId) {
+                localStorage.setItem('courierId', courierId); // Save to localStorage for future
+            }
+        }
 
         if (!courierId) {
             alert('Kurye kimliği bulunamadı. Lütfen giriş yapın.');

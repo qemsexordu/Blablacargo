@@ -185,10 +185,17 @@
                 if (response.ok) {
                     responseDiv.className = 'response-message success';
                     responseDiv.textContent = data.message;
-                    // Redirect to login page after successful registration
-                    setTimeout(() => {
-                        window.location.href = '/kurye-giris.html';
-                    }, 2000);
+                    
+                    // Assuming server returns courierId on successful registration
+                    if (data.courierId) {
+                        localStorage.setItem('courierId', data.courierId);
+                        window.location.href = '/courier.html'; // Direct to panel
+                    } else {
+                        // Fallback: If no courierId, redirect to login as before
+                        setTimeout(() => {
+                            window.location.href = '/kurye-giris.html';
+                        }, 2000);
+                    }
                 } else {
                     throw new Error(data.error || 'Bilinmeyen bir hata oluştu.');
                 }

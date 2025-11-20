@@ -6,6 +6,7 @@
     <title>KapGel - Kurye Paneli</title>
     <link rel="manifest" href="/manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -63,7 +64,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #ccc;
+            background-color: #dc3545;
             transition: .4s;
             border-radius: 34px;
         }
@@ -183,6 +184,44 @@
             border-top: 1px solid #eee;
             margin-top: 15px;
         }
+        .tab-navigation {
+            border-bottom: 1px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            background-color: #f0f0f0;
+            border: 1px solid #e0e0e0;
+            border-bottom: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #555;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            transition: background-color 0.2s ease-in-out;
+            margin-right: 5px;
+        }
+        .tab-btn:hover {
+            background-color: #e0e0e0;
+        }
+        .tab-btn.active {
+            background-color: #ffffff;
+            border-color: #007bff;
+            color: #007bff;
+            position: relative;
+            z-index: 1;
+            margin-bottom: -1px; /* Overlap border */
+        }
+        .tab-pane {
+            padding-top: 15px;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
     </style>
 </head>
 <body>
@@ -196,44 +235,80 @@
             </label>
         </div>
         <div id="courierIdDisplay" style="text-align: center; margin-bottom: 20px; font-size: 1.1em; font-weight: 500; color: #555;">Kurye ID: Bağlanıyor...</div>
-        
-        <div id="courierStats" class="rating-display">
-            <h2>Kurye Değerlendirmesi</h2>
-            <p>Ortalama Puan: <span id="averageRatingDisplay">0.00</span> (<span id="totalRatingsDisplay">0</span> değerlendirme)</p>
-            <div class="progress-bar-container">
-                <div class="progress-bar" id="ratingProgressBar"></div>
-            </div>
+
+        <div class="tab-navigation" style="display: flex; justify-content: flex-start; margin-bottom: 20px;">
+            <button class="tab-btn active" data-tab="courierRating">Kurye Değerlendirmesi</button>
+            <button class="tab-btn" data-tab="financialOverview">Finansal Genel Bakış</button>
+            <button class="tab-btn" data-tab="customerFeedback">Müşteri Geri Bildirimleri</button>
         </div>
 
-        <div id="financialOverview" class="rating-display" style="margin-top: 20px;">
-            <h2>Finansal Genel Bakış</h2>
-            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
-                <button class="tab-button active" data-timeframe="daily">Günlük</button>
-                <button class="tab-button" data-timeframe="weekly">Haftalık</button>
-                <button class="tab-button" data-timeframe="monthly">Aylık</button>
-            </div>
-            <div id="summaryContent">
-                <div id="dailySummaryContent" class="summary-tab-content active">
-                    <p><strong>Kazanılan:</strong> <span id="summaryEarned">0.00</span> TL</p>
-                    <p><strong>Yakıt Gideri:</strong> <span id="summaryFuelExpense">0.00</span> TL</p>
-                    <p><strong>Diğer Giderler:</strong> <span id="summaryOtherExpenses">0.00</span> TL</p>
-                    <p style="font-size: 1.2em; font-weight: bold; color: #007bff;"><strong>Net Kâr:</strong> <span id="summaryNetProfit">0.00</span> TL</p>
-                </div>
-                <div id="weeklySummaryContent" class="summary-tab-content" style="display:none;">
-                    <p><strong>Kazanılan:</strong> <span id="weeklyEarned">0.00</span> TL</p>
-                    <p><strong>Yakıt Gideri:</strong> <span id="weeklyFuelExpense">0.00</span> TL</p>
-                    <p><strong>Diğer Giderler:</strong> <span id="weeklyOtherExpenses">0.00</span> TL</p>
-                    <p style="font-size: 1.2em; font-weight: bold; color: #007bff;"><strong>Net Kâr:</strong> <span id="weeklyNetProfit">0.00</span> TL</p>
-                </div>
-                <div id="monthlySummaryContent" class="summary-tab-content" style="display:none;">
-                    <p><strong>Kazanılan:</strong> <span id="monthlyEarned">0.00</span> TL</p>
-                    <p><strong>Yakıt Gideri:</strong> <span id="weeklyFuelExpense">0.00</span> TL</p>
-                    <p><strong>Diğer Giderler:</strong> <span id="weeklyOtherExpenses">0.00</span> TL</p>
-                    <p style="font-size: 1.2em; font-weight: bold; color: #007bff;"><strong>Net Kâr:</strong> <span id="monthlyNetProfit">0.00</span> TL</p>
+        <div id="tabContent">
+            <div id="courierRating" class="tab-pane active">
+                <div id="courierStats" class="rating-display">
+                    <h2>Kurye Değerlendirmesi</h2>
+                    <p>Ortalama Puan: <span id="averageRatingDisplay">0.00</span> (<span id="totalRatingsDisplay">0</span> değerlendirme)</p>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="ratingProgressBar"></div>
+                    </div>
                 </div>
             </div>
-            <div style="width: 100%; margin-top: 20px;">
-                <canvas id="financialChart"></canvas>
+
+            <div id="financialOverview" class="tab-pane" style="display:none;">
+                <div class="rating-display" style="margin-top: 0;"> <!-- margin-top removed as it's now inside a tab -->
+                    <h2>Finansal Genel Bakış</h2>
+                    <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                        <button class="tab-button active" data-timeframe="daily">Günlük</button>
+                        <button class="tab-button" data-timeframe="weekly">Haftalık</button>
+                        <button class="tab-button" data-timeframe="monthly">Aylık</button>
+                    </div>
+
+                    <!-- Grid container for summary and chart -->
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; align-items: start;">
+
+                        <!-- Left Side: Summary Content -->
+                        <div id="summaryContent" style="border: 1px solid #eee; padding: 15px; border-radius: 8px;">
+                            <div id="dailySummaryContent" class="summary-tab-content active" style="margin-top:0; border-top:none; padding:0;">
+                                <h4 style="margin-top:0; color: #007bff;">Günlük Özet</h4>
+                                <p><strong>Kazanılan:</strong> <span id="summaryEarned">0.00</span> TL</p>
+                                <p><strong>Yakıt Gideri:</strong> <span id="summaryFuelExpense">0.00</span> TL</p>
+                                <p><strong>Diğer Giderler:</strong> <span id="summaryOtherExpenses">0.00</span> TL</p>
+                                <p style="font-size: 1.2em; font-weight: bold; color: #007bff;"><strong>Net Kâr:</strong> <span id="summaryNetProfit">0.00</span> TL</p>
+                            </div>
+                            <div id="weeklySummaryContent" class="summary-tab-content" style="display:none; margin-top:0; border-top:none; padding:0;">
+                                <h4 style="margin-top:0; color: #007bff;">Haftalık Özet</h4>
+                                <p><strong>Kazanılan:</strong> <span id="weeklyEarned">0.00</span> TL</p>
+                                <p><strong>Yakıt Gideri:</strong> <span id="weeklyFuelExpense">0.00</span> TL</p>
+                                <p><strong>Diğer Giderler:</strong> <span id="weeklyOtherExpenses">0.00</span> TL</p>
+                                <p style="font-size: 1.2em; font-weight: bold; color: #007bff;"><strong>Net Kâr:</strong> <span id="weeklyNetProfit">0.00</span> TL</p>
+                            </div>
+                            <div id="monthlySummaryContent" class="summary-tab-content" style="display:none; margin-top:0; border-top:none; padding:0;">
+                                <h4 style="margin-top:0; color: #007bff;">Aylık Özet</h4>
+                                <p><strong>Kazanılan:</strong> <span id="monthlyEarned">0.00</span> TL</p>
+                                <p><strong>Yakıt Gideri:</strong> <span id="monthlyFuelExpense">0.00</span> TL</p>
+                                <p><strong>Diğer Giderler:</strong> <span id="monthlyOtherExpenses">0.00</span> TL</p>
+                                <p style="font-size: 1.2em; font-weight: bold; color: #007bff;"><strong>Net Kâr:</strong> <span id="monthlyNetProfit">0.00</span> TL</p>
+                            </div>
+                        </div>
+
+                        <!-- Right Side: Chart -->
+                        <div style="min-height: 300px;">
+                            <canvas id="financialChart"></canvas>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            
+            <div id="customerFeedback" class="tab-pane" style="display:none;">
+                <div class="feedback-section" style="margin-top: 0; padding-top: 0;"> <!-- Remove top margin/padding as it's now inside a tab -->
+                    <h2>Müşteri Geri Bildirimleri</h2>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <button id="viewFeedbackBtn" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em;">Geri Bildirimleri Gör</button>
+                    </div>
+                    <div id="feedbackList">
+                        <p style="text-align: center; color: #6c757d;">Henüz geri bildirim bulunmuyor.</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -241,16 +316,7 @@
         <div id="verificationActionButton" style="text-align: center; margin-bottom: 20px; display: none;">
             <button id="goToVerificationBtn" style="padding: 10px 20px; background-color: #ffc107; color: #333; border: none; border-radius: 5px; cursor: pointer; font-size: 1em;">Kimlik Doğrulama Sayfasına Git</button>
         </div>
-
-        <div class="feedback-section">
-            <h2>Müşteri Geri Bildirimleri</h2>
-            <div style="text-align: center; margin-bottom: 20px;">
-                <button id="viewFeedbackBtn" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 1em;">Geri Bildirimleri Gör</button>
-            </div>
-            <div id="feedbackList">
-                <p style="text-align: center; color: #6c757d;">Henüz geri bildirim bulunmuyor.</p>
-            </div>
-        </div>
+        
         
         <div id="shipmentsList" style="margin-top: 30px;">
             <h2 style="text-align: center; color: #007bff; margin-bottom: 20px;">Yeni Gönderi Bildirimleri</h2>
@@ -507,14 +573,58 @@
         function initializePanel() {
             // These functions will now operate with dummy/empty data
             loadShipmentHistory();
-            showSummary('daily'); 
+            
+            // Rename for clarity - these are for the financial overview's daily/weekly/monthly tabs
+            const financialTabButtons = document.querySelectorAll('.rating-display .tab-button');
+            const financialSummaryContents = document.querySelectorAll('.summary-tab-content');
 
-            tabButtons.forEach(button => {
+            showSummary('daily'); // Initialize financial overview to daily
+
+            financialTabButtons.forEach(button => {
                 button.addEventListener('click', () => {
+                    // Ensure only one financial tab is active
+                    financialTabButtons.forEach(btn => btn.classList.remove('active'));
+                    financialSummaryContents.forEach(content => content.style.display = 'none');
+                    button.classList.add('active');
+
                     const timeframe = button.dataset.timeframe;
                     showSummary(timeframe);
                 });
             });
+
+            // Main tab switching logic - moved inside initializePanel
+            const mainTabButtons = document.querySelectorAll('.tab-navigation .tab-btn');
+            const mainTabPanes = document.querySelectorAll('#tabContent .tab-pane');
+
+            mainTabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Hide all panes and deactivate all buttons first
+                    mainTabPanes.forEach(pane => {
+                        pane.style.display = 'none';
+                        pane.classList.remove('active');
+                    });
+                    mainTabButtons.forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+
+                    // Activate the clicked button and its corresponding pane
+                    button.classList.add('active');
+                    const targetPane = document.getElementById(button.dataset.tab);
+                    if (targetPane) {
+                        targetPane.style.display = 'block';
+                        targetPane.classList.add('active');
+                    }
+                });
+            });
+
+            // Set initial main tab state (Courier Rating should be active by default)
+            const initialTabButton = document.querySelector('.tab-navigation .tab-btn.active');
+            const initialTabPaneId = initialTabButton.dataset.tab;
+            const initialTabPane = document.getElementById(initialTabPaneId);
+            if (initialTabPane) {
+                initialTabPane.style.display = 'block';
+            }
+
 
             // WebSocket connection is commented out to prevent errors with dummy ID
             // const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -531,11 +641,11 @@
                     // ws.send(JSON.stringify({ type: 'status_update', data: { status: 'active' } }));
                 } else {
                     statusLabel.textContent = 'Pasif';
-                    statusLabel.style.color = '#6c757d';
+                    statusLabel.style.color = '#dc3545';
                     // stopLocationTracking(); // Disabled for dummy ID
                     // ws.send(JSON.stringify({ type: 'status_update', data: { status: 'inactive' } }));
                 }
-                alert('Kurye durumu değiştirildi: ' + (isCourierActive ? 'Aktif' : 'Pasif') + ' (Bu sadece görseldir, backend bağlantısı yok)');
+
             });
 
             // WebSocket handlers are removed/commented out
@@ -549,8 +659,6 @@
 
             fetchCourierStats(); // Call to dummy version
         }
-
-
         async function fetchCourierStats() {
              console.log('fetchCourierStats DEV modunda devre dışı bırakıldı.');
              averageRatingDisplay.textContent = '0.00';

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KapGel - Kurye Kayıt</title>
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+        h1 {
+            color: #28a745; /* Green for courier theme */
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        input:focus,
+        select:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .response-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+        .response-message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .response-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .login-link a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kurye Olarak Kaydol</h1>
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="firstName">Ad</label>
+                <input type="text" id="firstName" name="firstName" required>
+            </div>
+            <div class="form-group">
+                <label for="lastName">Soyad</label>
+                <input type="text" id="lastName" name="lastName" required>
+            </div>
+            <div class="form-group">
+                <label for="tcKimlikNo">T.C. Kimlik Numarası</label>
+                <input type="text" id="tcKimlikNo" name="tcKimlikNo" required minlength="11" maxlength="11" pattern="[0-9]{11}" inputmode="numeric" title="T.C. Kimlik Numarası 11 rakamdan oluşmalıdır.">
+            </div>
+            <div class="form-group">
+                <label for="email">E-posta</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Telefon</label>
+                <input type="tel" id="phone" name="phone" required maxlength="11" pattern="0[0-9]{10}" title="Telefon numarası 0 ile başlamalı ve toplam 11 rakamdan oluşmalıdır." inputmode="numeric">
+            </div>
+            <div class="form-group">
+                <label for="password">Şifre</label>
+                <input type="password" id="password" name="password" required minlength="6" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+}{&quot;:'/?&gt;.<,])(?=.*[^a-zA-Z0-9\s]).{6,}" title="Şifre en az 6 karakter olmalı, büyük harf, küçük harf, rakam ve özel karakter içermelidir.">
+            </div>
+            <div class="form-group">
+                <label for="iban">IBAN</label>
+                <input type="text" id="iban" name="iban" required minlength="26" maxlength="26" pattern="TR[0-9A-Z]{24}" title="IBAN TR ile başlamalı ve toplam 26 karakterden oluşmalıdır (TR + 24 karakter)." style="text-transform: uppercase;">
+            </div>
+            <div class="form-group">
+                <label for="vehicleType">Araç Tipi</label>
+                <select id="vehicleType" name="vehicleType" required>
+                    <option value="">Seçiniz...</option>
+                    <option value="motosiklet">Motosiklet</option>
+                    <option value="araba">Araba</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="licensePlate">Araç Plakası</label>
+                <input type="text" id="licensePlate" name="licensePlate" required>
+            </div>
+            <button type="submit">Kayıt Ol</button>
+        </form>
+        <div id="response" class="response-message" style="display: none;"></div>
+        <div class="login-link">
+            <p>Zaten bir hesabın var mı? <a href="/kurye-giris.html">Giriş Yap</a></p>
+        </div>
+    </div>
+    
+    <script>
+        // TEMPORARY DEVELOPMENT BYPASS: This block completely bypasses registration for testing purposes.
+        // REMOVE BEFORE PRODUCTION DEPLOYMENT.
+        localStorage.setItem('courierId', 'dev_courier_123'); // Set a dummy courier ID
+        window.location.href = '/courier.html';
+    </script>
+</body>
+</html>

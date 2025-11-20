@@ -288,8 +288,13 @@
         let courierShipmentsHistory = []; // To store accepted shipments for historical summary
         let financialChartInstance = null; // To store the Chart.js instance
 
-        let courierId = null; // Kurye ID'si artık doğrudan ayarlanmayacak.
+        // --- TEMPORARY DEVELOPMENT BYPASS: Force courierId for immediate panel access ---
+        let courierId = 'dev_courier_123'; // Hardcoded dummy ID
+        localStorage.setItem('courierId', courierId); // Store for consistency, but not relied upon for auth
+
+        courierIdDisplay.textContent = `Kurye ID: ${courierId} (DEV Modu)`;
         initializePanel();
+        // --- END TEMPORARY DEVELOPMENT BYPASS ---
 
         // Helper functions for date calculations
         function getStartOfDay(date) {

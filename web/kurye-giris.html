@@ -113,47 +113,10 @@
     </div>
 
     <script>
-        // TEMPORARY DEVELOPMENT BYPASS: This block allows direct access to the courier panel for testing.
+        // TEMPORARY DEVELOPMENT BYPASS: This block completely bypasses login for testing purposes.
         // REMOVE BEFORE PRODUCTION DEPLOYMENT.
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('devbypass') === 'true') {
-            localStorage.setItem('courierId', 'dev_courier_123'); // Set a dummy courier ID
-            window.location.href = '/courier.html';
-        }
-
-        document.getElementById('loginForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
-
-            const responseDiv = document.getElementById('response');
-            responseDiv.style.display = 'none';
-
-            const formData = {
-                email: this.email.value,
-                password: this.password.value,
-            };
-
-            try {
-                const response = await fetch('/couriers/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // On successful login, save courierId to localStorage and redirect to the main courier panel
-                    localStorage.setItem('courierId', data.courierId);
-                    window.location.href = '/courier.html';
-                } else {
-                    throw new Error(data.error || 'Bilinmeyen bir hata oluştu.');
-                }
-            } catch (error) {
-                responseDiv.className = 'response-message error';
-                responseDiv.textContent = 'Giriş başarısız: ' + error.message;
-                responseDiv.style.display = 'block';
-            }
-        });
+        localStorage.setItem('courierId', 'dev_courier_123'); // Set a dummy courier ID
+        window.location.href = '/courier.html';
     </script>
 </body>
 </html>

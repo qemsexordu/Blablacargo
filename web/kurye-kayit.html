@@ -98,6 +98,50 @@
             text-decoration: none;
             font-weight: 500;
         }
+        fieldset {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        legend {
+            padding: 0 10px;
+            font-weight: 500;
+            color: #28a745;
+        }
+        .file-upload-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            padding: 6px;
+            width: 100%;
+        }
+        .file-input {
+            display: none;
+        }
+        .file-upload-button {
+            background-color: #6c757d;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            white-space: nowrap; /* Prevent text wrapping */
+        }
+        .file-upload-button:hover {
+            background-color: #5a6268;
+        }
+        .file-name {
+            margin-left: 15px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #555;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -132,6 +176,41 @@
                 <label for="iban">IBAN</label>
                 <input type="text" id="iban" name="iban" required minlength="26" maxlength="26" pattern="TR[0-9A-Z]{24}" title="IBAN TR ile başlamalı ve toplam 26 karakterden oluşmalıdır (TR + 24 karakter)." style="text-transform: uppercase;">
             </div>
+            <fieldset class="form-group">
+                <legend>Ehliyet ve Vergi Levhası Bilgileri</legend>
+                <div class="form-group">
+                    <label>Selfie</label>
+                    <div class="file-upload-wrapper">
+                        <input type="file" id="selfie" name="selfie" class="file-input" accept="image/*" capture="user" required>
+                        <label for="selfie" class="file-upload-button">Belge Yükle</label>
+                        <span class="file-name">Dosya seçilmedi</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Ehliyet (Ön Yüz)</label>
+                    <div class="file-upload-wrapper">
+                        <input type="file" id="licenseFront" name="licenseFront" class="file-input" accept="image/*" required>
+                        <label for="licenseFront" class="file-upload-button">Belge Yükle</label>
+                        <span class="file-name">Dosya seçilmedi</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Ehliyet (Arka Yüz)</label>
+                    <div class="file-upload-wrapper">
+                        <input type="file" id="licenseBack" name="licenseBack" class="file-input" accept="image/*" required>
+                        <label for="licenseBack" class="file-upload-button">Belge Yükle</label>
+                        <span class="file-name">Dosya seçilmedi</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Vergi Levhası</label>
+                    <div class="file-upload-wrapper">
+                        <input type="file" id="taxPlate" name="taxPlate" class="file-input" accept="image/*,application/pdf" required>
+                        <label for="taxPlate" class="file-upload-button">Belge Yükle</label>
+                        <span class="file-name">Dosya seçilmedi</span>
+                    </div>
+                </div>
+            </fieldset>
             <div class="form-group">
                 <label for="vehicleType">Araç Tipi</label>
                 <select id="vehicleType" name="vehicleType" required>
@@ -153,10 +232,18 @@
     </div>
     
     <script>
-        // TEMPORARY DEVELOPMENT BYPASS: This block completely bypasses registration for testing purposes.
-        // REMOVE BEFORE PRODUCTION DEPLOYMENT.
-        localStorage.setItem('courierId', 'dev_courier_123'); // Set a dummy courier ID
-        window.location.href = '/courier.html';
+        // Registration logic will be implemented here.
+
+        document.querySelectorAll('.file-input').forEach(input => {
+            input.addEventListener('change', (event) => {
+                const fileNameSpan = event.target.nextElementSibling.nextElementSibling;
+                if (event.target.files.length > 0) {
+                    fileNameSpan.textContent = event.target.files[0].name;
+                } else {
+                    fileNameSpan.textContent = 'Dosya seçilmedi';
+                }
+            });
+        });
     </script>
 </body>
 </html>

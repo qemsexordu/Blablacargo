@@ -60,6 +60,20 @@
             box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
             outline: none;
         }
+        input[type="tel"] {
+            width: 100%;
+            padding: 15px; /* Increased padding */
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 18px; /* Increased font size */
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        input[type="tel"]:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
         button {
             width: 100%;
             padding: 14px;
@@ -120,7 +134,7 @@
             </div>
             <div class="form-group">
                 <label for="senderPhone">Telefon Numarası</label>
-                <input type="tel" id="senderPhone" name="senderPhone" required maxlength="11" pattern="0[0-9]{10}" title="Telefon numarası 0 ile başlamalı ve toplam 11 rakamdan oluşmalıdır." inputmode="numeric">
+                <input type="tel" id="senderPhone" name="senderPhone" required title="Telefon numarası 0 (5XX) XXX XX XX formatında olmalıdır." inputmode="numeric">
             </div>
             <div class="form-group">
                 <label for="senderAddress">Adres</label>
@@ -143,7 +157,7 @@
             </div>
             <div class="form-group">
                 <label for="receiverPhone">Telefon Numarası</label>
-                <input type="tel" id="receiverPhone" name="receiverPhone" required maxlength="11" pattern="0[0-9]{10}" title="Telefon numarası 0 ile başlamalı ve toplam 11 rakamdan oluşmalıdır." inputmode="numeric">
+                <input type="tel" id="receiverPhone" name="receiverPhone" required title="Telefon numarası 0 (5XX) XXX XX XX formatında olmalıdır." inputmode="numeric">
             </div>
             <div class="form-group">
                 <label for="receiverAddress">Adres</label>
@@ -200,55 +214,54 @@
             function formatPhoneNumberInput(event) {
                 let input = event.target;
                 let value = input.value;
-                let cursorStart = input.selectionStart;
-                let cursorEnd = input.selectionEnd;
+                
+                // Get only digits from the input
+                let digits = value.replace(/\D/g, '');
 
-                // If empty, set to '0'
-                if (value === '') {
+                // It should always start with 0, but if the user deletes everything, let them start over.
+                if (digits.length === 0) {
                     input.value = '0';
-                    input.setSelectionRange(1, 1);
                     return;
                 }
 
-                // Ensure it starts with '0'
-                if (value[0] !== '0') {
-                    value = '0' + value.substring(1);
+                // If the first digit is not 0, it's likely a mistake, force it to be 0.
+                if (digits[0] !== '0') {
+                    digits = '0' + digits.substring(1);
                 }
+                
+                // Limit total digits to 11
+                digits = digits.substring(0, 11);
 
-                // Remove non-digits, but keep the initial '0'
-                let cleanedValue = '0' + value.substring(1).replace(/\D/g, '');
-
-                // Limit to 11 characters
-                if (cleanedValue.length > 11) {
-                    cleanedValue = cleanedValue.substring(0, 11);
+                let formattedValue = '';
+                if (digits.length > 0) {
+                    // Part 1: The leading '0'
+                    formattedValue = digits.substring(0, 1);
                 }
-
-                // If the value changed, update the input and adjust cursor
-                if (input.value !== cleanedValue) {
-                    input.value = cleanedValue;
-                    // Adjust cursor position
-                    if (cursorStart > cleanedValue.length) {
-                        cursorStart = cleanedValue.length;
-                    }
-                    if (cursorEnd > cleanedValue.length) {
-                        cursorEnd = cleanedValue.length;
-                    }
-                    input.setSelectionRange(cursorStart, cursorEnd);
-                } else {
-                    // If the first char was deleted or changed to non-0 by user, fix it
-                    if (input.value.length > 0 && input.value[0] !== '0') {
-                        input.value = '0' + input.value.substring(1);
-                        input.setSelectionRange(cursorStart, cursorEnd);
-                    }
+                if (digits.length > 1) {
+                    // Part 2: The area code in parentheses
+                    formattedValue += ' (' + digits.substring(1, 4);
+                }
+                if (digits.length > 4) {
+                    // Part 3: First part of the number
+                    formattedValue += ') ' + digits.substring(4, 7);
+                }
+                if (digits.length > 7) {
+                    // Part 4: Second part
+                    formattedValue += ' ' + digits.substring(7, 9);
+                }
+                if (digits.length > 9) {
+                    // Part 5: Third part
+                    formattedValue += ' ' + digits.substring(9, 11);
+                }
+                
+                // Only update if the value has changed to prevent infinite loops
+                if (input.value !== formattedValue) {
+                    input.value = formattedValue;
                 }
             }
 
             senderPhoneInput.addEventListener('input', formatPhoneNumberInput);
             receiverPhoneInput.addEventListener('input', formatPhoneNumberInput);
-
-            // Initialize the inputs with '0' if they are empty on load
-            if (senderPhoneInput.value === '') senderPhoneInput.value = '0';
-            if (receiverPhoneInput.value === '') receiverPhoneInput.value = '0';
         });
 
         // Existing termsCheckbox, submitBtn, and form submission logic

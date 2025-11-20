@@ -114,7 +114,7 @@
             </div>
             <div class="form-group">
                 <label for="tcKimlikNo">T.C. Kimlik Numarası</label>
-                <input type="text" id="tcKimlikNo" name="tcKimlikNo" required minlength="11" maxlength="11" pattern="[0-9]{11}">
+                <input type="text" id="tcKimlikNo" name="tcKimlikNo" required minlength="11" maxlength="11" pattern="[0-9]{11}" inputmode="numeric" title="T.C. Kimlik Numarası 11 rakamdan oluşmalıdır.">
             </div>
             <div class="form-group">
                 <label for="email">E-posta</label>
@@ -122,15 +122,15 @@
             </div>
             <div class="form-group">
                 <label for="phone">Telefon</label>
-                <input type="tel" id="phone" name="phone" required>
+                <input type="tel" id="phone" name="phone" required maxlength="11" pattern="0[0-9]{10}" title="Telefon numarası 0 ile başlamalı ve toplam 11 rakamdan oluşmalıdır." inputmode="numeric">
             </div>
             <div class="form-group">
                 <label for="password">Şifre</label>
-                <input type="password" id="password" name="password" required minlength="6">
+                <input type="password" id="password" name="password" required minlength="6" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+}{&quot;:'/?&gt;.<,])(?=.*[^a-zA-Z0-9\s]).{6,}" title="Şifre en az 6 karakter olmalı, büyük harf, küçük harf, rakam ve özel karakter içermelidir.">
             </div>
             <div class="form-group">
                 <label for="iban">IBAN</label>
-                <input type="text" id="iban" name="iban" required>
+                <input type="text" id="iban" name="iban" required minlength="26" maxlength="26" pattern="TR[0-9A-Z]{24}" title="IBAN TR ile başlamalı ve toplam 26 karakterden oluşmalıdır (TR + 24 karakter)." style="text-transform: uppercase;">
             </div>
             <div class="form-group">
                 <label for="vehicleType">Araç Tipi</label>
@@ -153,6 +153,126 @@
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tcKimlikNoInput = document.getElementById('tcKimlikNo');
+            const phoneInput = document.getElementById('phone');
+            const ibanInput = document.getElementById('iban');
+            const passwordInput = document.getElementById('password');
+
+            // --- TC Kimlik No Validation ---
+            tcKimlikNoInput.addEventListener('input', function(event) {
+                let input = event.target;
+                let value = input.value;
+                let cursorPosition = input.selectionStart;
+
+                let cleanedValue = value.replace(/\D/g, ''); // Remove non-digits
+                if (cleanedValue.length > 11) {
+                    cleanedValue = cleanedValue.substring(0, 11);
+                }
+
+                if (input.value !== cleanedValue) {
+                    input.value = cleanedValue;
+                    // Adjust cursor position if necessary
+                    if (cursorPosition > cleanedValue.length) {
+                        input.setSelectionRange(cleanedValue.length, cleanedValue.length);
+                    } else {
+                        input.setSelectionRange(cursorPosition, cursorPosition);
+                    }
+                }
+            });
+            
+            // --- Phone Number Validation (similar to sender.html) ---
+            function formatPhoneNumberInput(event) {
+                let input = event.target;
+                let value = input.value;
+                let cursorStart = input.selectionStart;
+                let cursorEnd = input.selectionEnd;
+
+                // If empty, set to '0'
+                if (value === '') {
+                    input.value = '0';
+                    input.setSelectionRange(1, 1);
+                    return;
+                }
+
+                // Ensure it starts with '0'
+                if (value[0] !== '0') {
+                    value = '0' + value.substring(1);
+                }
+
+                // Remove non-digits, but keep the initial '0'
+                let cleanedValue = '0' + value.substring(1).replace(/\D/g, '');
+
+                // Limit to 11 characters
+                if (cleanedValue.length > 11) {
+                    cleanedValue = cleanedValue.substring(0, 11);
+                }
+
+                // If the value changed, update the input and adjust cursor
+                if (input.value !== cleanedValue) {
+                    input.value = cleanedValue;
+                    // Adjust cursor position
+                    if (cursorStart > cleanedValue.length) {
+                        cursorStart = cleanedValue.length;
+                    }
+                    if (cursorEnd > cleanedValue.length) {
+                        cursorEnd = cleanedValue.length;
+                    }
+                    input.setSelectionRange(cursorStart, cursorEnd);
+                } else {
+                    // If the first char was deleted or changed to non-0 by user, fix it
+                    if (input.value.length > 0 && input.value[0] !== '0') {
+                        input.value = '0' + input.value.substring(1);
+                        input.setSelectionRange(cursorStart, cursorEnd);
+                    }
+                }
+            }
+            phoneInput.addEventListener('input', formatPhoneNumberInput);
+            // Initialize the phone input with '0' if it is empty on load
+            if (phoneInput.value === '') phoneInput.value = '0';
+
+            // --- IBAN Validation ---
+            ibanInput.addEventListener('input', function(event) {
+                let input = event.target;
+                let value = input.value.toUpperCase(); // Ensure uppercase
+                let cursorPosition = input.selectionStart;
+
+                if (!value.startsWith('TR')) {
+                    value = 'TR' + value.replace('TR', ''); // Ensure 'TR' prefix, remove if user typed it elsewhere
+                }
+                
+                let cleanedValue = 'TR' + value.substring(2).replace(/[^0-9A-Z]/g, ''); // Remove non-alphanumeric after TR
+
+                if (cleanedValue.length > 26) {
+                    cleanedValue = cleanedValue.substring(0, 26);
+                }
+                
+                if (input.value !== cleanedValue) {
+                    input.value = cleanedValue;
+                    // Adjust cursor position
+                    if (cursorPosition < 2) cursorPosition = 2; // Keep cursor after 'TR'
+                    if (cursorPosition > cleanedValue.length) {
+                        input.setSelectionRange(cleanedValue.length, cleanedValue.length);
+                    } else {
+                        input.setSelectionRange(cursorPosition, cursorPosition);
+                    }
+                } else if (input.value.substring(0,2) !== 'TR') { // If user tried to delete TR
+                     input.value = 'TR' + input.value.substring(2);
+                     input.setSelectionRange(cursorPosition, cursorPosition);
+                }
+            });
+
+            // Initialize the IBAN input with 'TR' if it is empty on load
+            if (ibanInput.value === '') ibanInput.value = 'TR';
+
+            // --- Password Validation ---
+            // No real-time JS validation for password pattern in terms of giving specific feedback,
+            // as browser's pattern attribute will handle it on form submission.
+            // A more complex JS validation could show hints, but not requested.
+
+        });
+
+        // Original form submission listener
         document.getElementById('registerForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 

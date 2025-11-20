@@ -113,6 +113,14 @@
     </div>
 
     <script>
+        // TEMPORARY DEVELOPMENT BYPASS: This block allows direct access to the courier panel for testing.
+        // REMOVE BEFORE PRODUCTION DEPLOYMENT.
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('devbypass') === 'true') {
+            localStorage.setItem('courierId', 'dev_courier_123'); // Set a dummy courier ID
+            window.location.href = '/courier.html';
+        }
+
         document.getElementById('loginForm').addEventListener('submit', async function(event) {
             event.preventDefault();
 

@@ -288,24 +288,13 @@
         let courierShipmentsHistory = []; // To store accepted shipments for historical summary
         let financialChartInstance = null; // To store the Chart.js instance
 
-        // --- TEMPORARY DEVELOPMENT BYPASS: This ensures courierId is always available ---
-        let courierId = localStorage.getItem('courierId');
+        // --- TEMPORARY DEVELOPMENT BYPASS: Force courierId for immediate panel access ---
+        let courierId = 'dev_courier_123'; // Hardcoded dummy ID
+        localStorage.setItem('courierId', courierId); // Store for consistency, but not relied upon for auth
 
-        if (!courierId) {
-            // Try to get from URL params, if not, set a dummy one
-            const urlParams = new URLSearchParams(window.location.search);
-            courierId = urlParams.get('courierId');
-            if (!courierId) {
-                courierId = 'dev_courier_123'; // Set a dummy ID for development
-                localStorage.setItem('courierId', courierId); // Save for future direct access
-            } else {
-                localStorage.setItem('courierId', courierId); // Save existing from URL
-            }
-        }
-
-        courierIdDisplay.textContent = `Kurye ID: ${courierId}`;
+        courierIdDisplay.textContent = `Kurye ID: ${courierId} (DEV Modu)`;
         initializePanel();
-        // --- End of TEMPORARY DEVELOPMENT BYPASS ---
+        // --- END TEMPORARY DEVELOPMENT BYPASS ---
 
         // Helper functions for date calculations
         function getStartOfDay(date) {
@@ -516,8 +505,9 @@
         }
 
         function initializePanel() {
-            loadShipmentHistory(); // Load all historical shipments for this courier
-            showSummary('daily'); // Show daily summary by default
+            // These functions will now operate with dummy/empty data
+            loadShipmentHistory();
+            showSummary('daily'); 
 
             tabButtons.forEach(button => {
                 button.addEventListener('click', () => {
@@ -526,107 +516,47 @@
                 });
             });
 
-            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsHost = window.location.host;
-            const wsUrl = `${wsProtocol}//${wsHost}`;
-            const ws = new WebSocket(wsUrl);
+            // WebSocket connection is commented out to prevent errors with dummy ID
+            // const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            // const wsHost = window.location.host;
+            // const wsUrl = `${wsProtocol}//${wsHost}`;
+            // const ws = new WebSocket(wsUrl);
 
             courierStatusToggle.addEventListener('change', () => {
                 isCourierActive = courierStatusToggle.checked;
                 if (isCourierActive) {
                     statusLabel.textContent = 'Aktif';
                     statusLabel.style.color = '#28a745';
-                    startLocationTracking(ws);
-                    ws.send(JSON.stringify({ type: 'status_update', data: { status: 'active' } }));
+                    // startLocationTracking(ws); // Disabled for dummy ID
+                    // ws.send(JSON.stringify({ type: 'status_update', data: { status: 'active' } }));
                 } else {
                     statusLabel.textContent = 'Pasif';
                     statusLabel.style.color = '#6c757d';
-                    stopLocationTracking();
-                    ws.send(JSON.stringify({ type: 'status_update', data: { status: 'inactive' } }));
+                    // stopLocationTracking(); // Disabled for dummy ID
+                    // ws.send(JSON.stringify({ type: 'status_update', data: { status: 'inactive' } }));
                 }
+                alert('Kurye durumu değiştirildi: ' + (isCourierActive ? 'Aktif' : 'Pasif') + ' (Bu sadece görseldir, backend bağlantısı yok)');
             });
 
-            ws.onopen = function() {
-                console.log('WebSocket bağlantısı kuruldu.');
-                // Register using the ID from the URL
-                ws.send(JSON.stringify({ type: 'register', data: { role: 'courier', id: courierId } }));
-            };
+            // WebSocket handlers are removed/commented out
+            // ws.onopen = function() {
+            //     console.log('WebSocket bağlantısı kuruldu.');
+            //     ws.send(JSON.stringify({ type: 'register', data: { role: 'courier', id: courierId } }));
+            // };
+            // ws.onmessage = function(event) { ... };
+            // ws.onclose = function() { ... };
+            // ws.onerror = function(error) { ... };
 
-            ws.onmessage = function(event) {
-                const message = JSON.parse(event.data);
-                console.log('Gelen mesaj:', message);
-
-                if (message.type === 'welcome') {
-                    // Welcome message is now just a confirmation, no need to parse ID
-                    console.log('Sunucu tarafından hoş geldiniz mesajı alındı.');
-                    fetchCourierStats(); // Fetch initial stats
-                } else if (message.type === 'error') {
-                    alert(`Sunucu hatası: ${message.message}`);
-                    window.location.href = '/kurye-giris.html';
-                } else if (message.type === 'new_shipment') {
-                    if (isCourierActive) {
-                        const shipment = message.data;
-                        availableShipments[shipment.id] = shipment; // Store shipment details
-                        displayNewShipment(shipment);
-                    }
-                } else if (message.type === 'shipment_taken') {
-                    const takenShipmentId = message.data.id;
-                    delete availableShipments[takenShipmentId]; // Remove from available shipments
-                    const cardToRemove = document.getElementById(`shipment-${takenShipmentId}`);
-                    if (cardToRemove) {
-                        cardToRemove.remove();
-                        if (shipmentsList.children.length === 0) {
-                            shipmentsList.innerHTML = '<p class="no-shipments">Yeni gönderi bildirimleri bekleniyor...</p>';
-                        }
-                    }
-                } else if (message.type === 'stats_updated') {
-                    fetchCourierStats(); // Refresh stats when a new rating is submitted
-                }
-            };
-
-            ws.onclose = function() {
-                console.log('WebSocket bağlantısı kesildi.');
-                courierIdDisplay.textContent = 'Kurye ID: Bağlantı kesildi.';
-                stopLocationTracking();
-            };
-
-            ws.onerror = function(error) {
-                console.error('WebSocket hatası:', error);
-                courierIdDisplay.textContent = 'Kurye ID: Bağlantı hatası!';
-            };
+            fetchCourierStats(); // Call to dummy version
         }
 
 
         async function fetchCourierStats() {
-            if (!courierId) return;
-            try {
-                const response = await fetch(`/couriers/${courierId}/stats`);
-                const stats = await response.json();
-                if (response.ok) {
-                    const averageRating = parseFloat(stats.averageRating);
-                    const totalRatings = parseInt(stats.totalRatings);
-
-                    averageRatingDisplay.textContent = averageRating.toFixed(2);
-                    totalRatingsDisplay.textContent = totalRatings;
-
-                    // Update progress bar (assuming max rating is 5)
-                    const progressBarWidth = (averageRating / 5) * 100;
-                    ratingProgressBar.style.width = `${progressBarWidth}%`;
-                    ratingProgressBar.textContent = `${averageRating.toFixed(1)} / 5`;
-
-                } else {
-                    averageRatingDisplay.textContent = '0.00';
-                    totalRatingsDisplay.textContent = '0';
-                    ratingProgressBar.style.width = '0%';
-                    ratingProgressBar.textContent = '';
-                }
-            } catch (error) {
-                console.error('İstatistikler alınırken hata oluştu:', error);
-                averageRatingDisplay.textContent = '0.00';
-                totalRatingsDisplay.textContent = '0';
-                ratingProgressBar.style.width = '0%';
-                ratingProgressBar.textContent = '';
-            }
+             console.log('fetchCourierStats DEV modunda devre dışı bırakıldı.');
+             averageRatingDisplay.textContent = '0.00';
+             totalRatingsDisplay.textContent = '0';
+             ratingProgressBar.style.width = '0%';
+             ratingProgressBar.textContent = '';
         }
 
         const viewFeedbackBtn = document.getElementById('viewFeedbackBtn');
@@ -635,7 +565,8 @@
 
         viewFeedbackBtn.addEventListener('click', () => {
             if (feedbackSection.style.display === 'none') {
-                fetchCourierFeedback();
+                // fetchCourierFeedback(); // Disabled in DEV mode
+                feedbackList.innerHTML = '<p style="text-align: center; color: #6c757d;">Geri bildirimler DEV modunda devre dışı bırakıldı.</p>';
                 feedbackSection.style.display = 'block';
                 viewFeedbackBtn.textContent = 'Geri Bildirimleri Gizle';
             } else {
@@ -645,157 +576,71 @@
         });
 
         async function fetchCourierFeedback() {
-            if (!courierId) return;
-            try {
-                const response = await fetch(`/couriers/${courierId}/feedback`);
-                const data = await response.json();
-                if (response.ok) {
-                    feedbackList.innerHTML = ''; // Clear previous feedback
-                    if (data.feedback && data.feedback.length > 0) {
-                        data.feedback.forEach(f => {
-                            const feedbackItem = document.createElement('div');
-                            feedbackItem.className = 'feedback-item';
-                            feedbackItem.innerHTML = `
-                                <p><strong>Gönderi ID:</strong> ${f.shipmentId}</p>
-                                <p class="rating"><strong>Puan:</strong> ${'⭐'.repeat(f.rating)}</p>
-                                <p class="comment"><strong>Yorum:</strong> ${f.comment}</p>
-                                <p class="meta">Gönderen: ${f.sender} - ${new Date(f.createdAt).toLocaleString()}</p>
-                            `;
-                            feedbackList.appendChild(feedbackItem);
-                        });
-                    } else {
-                        feedbackList.innerHTML = '<p style="text-align: center; color: #6c757d;">Bu kurye için henüz bir geri bildirim bulunmuyor.</p>';
-                    }
-                } else {
-                    feedbackList.innerHTML = `<p style="text-align: center; color: #dc3545;">Geri bildirimler alınırken hata oluştu: ${data.message || 'Bilinmeyen Hata'}</p>`;
-                }
-            } catch (error) {
-                console.error('Geri bildirimler alınırken hata oluştu:', error);
-                feedbackList.innerHTML = '<p style="text-align: center; color: #dc3545;">Sunucuya bağlanırken hata oluştu.</p>';
-            }
+             console.log('fetchCourierFeedback DEV modunda devre dışı bırakıldı.');
+             feedbackList.innerHTML = '<p style="text-align: center; color: #dc3545;">Geri bildirimler DEV modunda devre dışı bırakıldı.</p>';
         }
 
+        // displayNewShipment, acceptShipment, rejectShipment functions are left, but will operate
+        // with no actual backend interaction for now.
         function displayNewShipment(shipment) {
             const noShipmentsMessage = shipmentsList.querySelector('.no-shipments');
             if (noShipmentsMessage) {
                 noShipmentsMessage.remove();
             }
-            const breakdown = shipment.earnings_breakdown;
+            // Use placeholder data for shipment details
             const shipmentCard = document.createElement('div');
             shipmentCard.id = `shipment-${shipment.id}`;
             shipmentCard.className = 'shipment-card';
             shipmentCard.innerHTML = `
-                <h3>Yeni Gönderi: ${shipment.id}</h3>
+                <h3>Yeni Gönderi: ${shipment.id} (DEV)</h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                     <div>
-                        <p><strong>Gönderici:</strong> ${shipment.sender.name}</p>
-                        <p><strong>Alıcı:</strong> ${shipment.receiver.name}</p>
-                        <p><strong>Teslimat Adresi:</strong> ${shipment.receiver.address}</p>
-                        <p><strong>Paket:</strong> ${shipment.packageDetails.description} (${shipment.packageDetails.size})</p>
+                        <p><strong>Gönderici:</strong> DEV Sender Name</p>
+                        <p><strong>Alıcı:</strong> DEV Receiver Name</p>
+                        <p><strong>Teslimat Adresi:</strong> DEV Delivery Address</p>
+                        <p><strong>Paket:</strong> DEV Package Desc (DEV Size)</p>
                     </div>
                     <div style="border-left: 2px solid #007bff; padding-left: 15px;">
                         <h4 style="margin-top: 0; margin-bottom: 10px; color: #155724;">Tahmini Net Kârınız:</h4>
-                        <p style="font-size: 2em; font-weight: bold; color: #28a745; margin: 0;">${breakdown.kurye_net_kar} TL</p>
+                        <p style="font-size: 2em; font-weight: bold; color: #28a745; margin: 0;">0.00 TL</p>
                         <details style="margin-top: 10px; font-size: 0.9em; cursor: pointer;">
                             <summary>Kazanç Detayları</summary>
                             <ul style="list-style-type: none; padding-left: 10px; margin-top: 5px;">
-                                <li>Müşteri Fiyatı: ${breakdown.musteri_fiyati} TL</li>
-                                <li>Brüt Kazanç: ${breakdown.kurye_brut_kazanc} TL</li>
-                                <li>Tahmini Yakıt: -${breakdown.tahmini_yakit_gideri} TL</li>
-                                <li>Diğer Giderler: -${breakdown.diger_giderler} TL</li>
+                                <li>Müşteri Fiyatı: 0.00 TL</li>
+                                <li>Brüt Kazanç: 0.00 TL</li>
+                                <li>Tahmini Yakıt: -0.00 TL</li>
+                                <li>Diğer Giderler: -0.00 TL</li>
                                 <hr style="border-top: 1px solid #ccc; margin: 4px 0;">
-                                <li>Şirket Net Kârı: ${breakdown.sirket_net_kari} TL</li>
-                                <li>SMA'lı çocukların tedavisine olan katkınız: ${breakdown.sma_tedavisi_katkisi} TL</li>
+                                <li>Şirket Net Kârı: 0.00 TL</li>
+                                <li>SMA'lı çocukların tedavisine olan katkınız: 0.00 TL</li>
                             </ul>
                         </details>
                     </div>
                 </div>
                 <div class="actions">
-                    <button class="accept-btn" data-shipment-id="${shipment.id}">Kabul Et</button>
-                    <button class="reject-btn" data-shipment-id="${shipment.id}">Reddet</button>
+                    <button class="accept-btn" data-shipment-id="${shipment.id}">Kabul Et (DEV)</button>
+                    <button class="reject-btn" data-shipment-id="${shipment.id}">Reddet (DEV)</button>
                 </div>
             `;
             shipmentsList.prepend(shipmentCard);
-            shipmentCard.querySelector('.accept-btn').addEventListener('click', () => acceptShipment(shipment.id));
-            shipmentCard.querySelector('.reject-btn').addEventListener('click', () => rejectShipment(shipment.id));
+            shipmentCard.querySelector('.accept-btn').addEventListener('click', () => alert('Gönderi kabul etme DEV modunda devre dışı bırakıldı.'));
+            shipmentCard.querySelector('.reject-btn').addEventListener('click', () => alert('Gönderi reddetme DEV modunda devre dışı bırakıldı.'));
         }
 
         async function acceptShipment(shipmentId) {
-            if (!courierId) {
-                alert('Kurye ID\'si mevcut değil. Lütfen tekrar bağlanmayı deneyin.');
-                return;
-            }
-            try {
-                const response = await fetch(`/shipments/${shipmentId}/accept`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ courierId: courierId })
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    alert(`Gönderi ${shipmentId} başarıyla kabul edildi!`);
-
-                    // Add accepted shipment to history
-                    const acceptedShipment = availableShipments[shipmentId];
-                    if (acceptedShipment && acceptedShipment.earnings_breakdown) {
-                        acceptedShipment.timestamp = Date.now(); // Add timestamp
-                        courierShipmentsHistory.push(acceptedShipment);
-                        saveShipmentHistory();
-                        showSummary('daily'); // Refresh summaries
-                    }
-                    delete availableShipments[shipmentId]; // Remove accepted shipment from available
-                    window.location.href = `courier_active_job.html?shipmentId=${shipmentId}`;
-                } else {
-                    alert(`Gönderi kabul edilirken hata oluştu: ${data.error}`);
-                }
-            } catch (error) {
-                alert('Sunucuya bağlanırken hata oluştu.');
-                console.error('Accept shipment error:', error);
-            }
+            alert('Gönderi kabul etme DEV modunda devre dışı bırakıldı.');
         }
 
         function rejectShipment(shipmentId) {
-            alert(`Gönderi ${shipmentId} reddedildi.`);
-            const cardToRemove = document.getElementById(`shipment-${shipmentId}`);
-            if (cardToRemove) {
-                cardToRemove.remove();
-                if (shipmentsList.children.length === 0) {
-                    shipmentsList.innerHTML = '<p class="no-shipments">Yeni gönderi bildirimleri bekleniyor...</p>';
-                }
-            }
+            alert('Gönderi reddetme DEV modunda devre dışı bırakıldı.');
         }
 
         function startLocationTracking(ws) {
-            if (locationWatcherId) return; // Already watching
-            if (!navigator.geolocation) {
-                console.log('Tarayıcınız konum servislerini desteklemiyor.');
-                return;
-            }
-            console.log('Konum takibi başlatılıyor...');
-            locationWatcherId = navigator.geolocation.watchPosition(
-                (position) => {
-                    const { latitude, longitude } = position.coords;
-                    console.log(`Konum güncellendi: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-                    if (ws.readyState === ws.OPEN && courierId && isCourierActive) {
-                        ws.send(JSON.stringify({
-                            type: 'location_update',
-                            data: { latitude, longitude }
-                        }));
-                    }
-                },
-                (error) => {
-                    console.error(`Konum alınamadı: ${error.message}`);
-                },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-            );
+            console.log('Konum takibi DEV modunda devre dışı bırakıldı.');
         }
 
         function stopLocationTracking() {
-            if (locationWatcherId) {
-                console.log('Konum takibi durduruluyor...');
-                navigator.geolocation.clearWatch(locationWatcherId);
-                locationWatcherId = null;
-            }
+            console.log('Konum takibi DEV modunda devre dışı bırakıldı.');
         }
     </script>
 <script>

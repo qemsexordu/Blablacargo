@@ -288,26 +288,24 @@
         let courierShipmentsHistory = []; // To store accepted shipments for historical summary
         let financialChartInstance = null; // To store the Chart.js instance
 
-        // --- New Authentication Flow ---
+        // --- TEMPORARY DEVELOPMENT BYPASS: This ensures courierId is always available ---
         let courierId = localStorage.getItem('courierId');
 
         if (!courierId) {
-            // If not in localStorage, check URL params (fallback for older links or initial login)
+            // Try to get from URL params, if not, set a dummy one
             const urlParams = new URLSearchParams(window.location.search);
             courierId = urlParams.get('courierId');
-            if (courierId) {
-                localStorage.setItem('courierId', courierId); // Save to localStorage for future
+            if (!courierId) {
+                courierId = 'dev_courier_123'; // Set a dummy ID for development
+                localStorage.setItem('courierId', courierId); // Save for future direct access
+            } else {
+                localStorage.setItem('courierId', courierId); // Save existing from URL
             }
         }
 
-        if (!courierId) {
-            alert('Kurye kimliği bulunamadı. Lütfen giriş yapın.');
-            window.location.href = '/kurye-giris.html';
-        } else {
-            courierIdDisplay.textContent = `Kurye ID: ${courierId}`;
-            initializePanel();
-        }
-        // --- End of New Auth Flow ---
+        courierIdDisplay.textContent = `Kurye ID: ${courierId}`;
+        initializePanel();
+        // --- End of TEMPORARY DEVELOPMENT BYPASS ---
 
         // Helper functions for date calculations
         function getStartOfDay(date) {

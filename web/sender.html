@@ -120,7 +120,7 @@
             </div>
             <div class="form-group">
                 <label for="senderPhone">Telefon Numarası</label>
-                <input type="tel" id="senderPhone" name="senderPhone" required>
+                <input type="tel" id="senderPhone" name="senderPhone" required maxlength="11" pattern="0[0-9]{10}" title="Telefon numarası 0 ile başlamalı ve toplam 11 rakamdan oluşmalıdır." inputmode="numeric">
             </div>
             <div class="form-group">
                 <label for="senderAddress">Adres</label>
@@ -143,7 +143,7 @@
             </div>
             <div class="form-group">
                 <label for="receiverPhone">Telefon Numarası</label>
-                <input type="tel" id="receiverPhone" name="receiverPhone" required>
+                <input type="tel" id="receiverPhone" name="receiverPhone" required maxlength="11" pattern="0[0-9]{10}" title="Telefon numarası 0 ile başlamalı ve toplam 11 rakamdan oluşmalıdır." inputmode="numeric">
             </div>
             <div class="form-group">
                 <label for="receiverAddress">Adres</label>
@@ -193,6 +193,65 @@
         let courierMarker = null;
         let senderMarker = null;
 
+        document.addEventListener('DOMContentLoaded', function() {
+            const senderPhoneInput = document.getElementById('senderPhone');
+            const receiverPhoneInput = document.getElementById('receiverPhone');
+
+            function formatPhoneNumberInput(event) {
+                let input = event.target;
+                let value = input.value;
+                let cursorStart = input.selectionStart;
+                let cursorEnd = input.selectionEnd;
+
+                // If empty, set to '0'
+                if (value === '') {
+                    input.value = '0';
+                    input.setSelectionRange(1, 1);
+                    return;
+                }
+
+                // Ensure it starts with '0'
+                if (value[0] !== '0') {
+                    value = '0' + value.substring(1);
+                }
+
+                // Remove non-digits, but keep the initial '0'
+                let cleanedValue = '0' + value.substring(1).replace(/\D/g, '');
+
+                // Limit to 11 characters
+                if (cleanedValue.length > 11) {
+                    cleanedValue = cleanedValue.substring(0, 11);
+                }
+
+                // If the value changed, update the input and adjust cursor
+                if (input.value !== cleanedValue) {
+                    input.value = cleanedValue;
+                    // Adjust cursor position
+                    if (cursorStart > cleanedValue.length) {
+                        cursorStart = cleanedValue.length;
+                    }
+                    if (cursorEnd > cleanedValue.length) {
+                        cursorEnd = cleanedValue.length;
+                    }
+                    input.setSelectionRange(cursorStart, cursorEnd);
+                } else {
+                    // If the first char was deleted or changed to non-0 by user, fix it
+                    if (input.value.length > 0 && input.value[0] !== '0') {
+                        input.value = '0' + input.value.substring(1);
+                        input.setSelectionRange(cursorStart, cursorEnd);
+                    }
+                }
+            }
+
+            senderPhoneInput.addEventListener('input', formatPhoneNumberInput);
+            receiverPhoneInput.addEventListener('input', formatPhoneNumberInput);
+
+            // Initialize the inputs with '0' if they are empty on load
+            if (senderPhoneInput.value === '') senderPhoneInput.value = '0';
+            if (receiverPhoneInput.value === '') receiverPhoneInput.value = '0';
+        });
+
+        // Existing termsCheckbox, submitBtn, and form submission logic
         const termsCheckbox = document.getElementById('termsCheckbox');
         const submitBtn = document.getElementById('submitBtn');
 

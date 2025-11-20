@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KapGel - Kurye Paneli</title>
     <link rel="manifest" href="/manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -26,19 +27,17 @@
             width: 100%;
             max-width: 800px;
             box-sizing: border-box;
-        }
-        h1 {
-            color: #007bff;
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 28px;
-            font-weight: 600;
+            position: relative; /* Add this for positioning child elements */
         }
         .status-toggle {
+            position: absolute; /* Position relative to the container */
+            top: 20px; /* Adjust as needed */
+            right: 20px; /* Adjust as needed */
             display: flex;
             align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
+            justify-content: flex-end; /* Align content to the right */
+            margin-bottom: 0; /* Remove existing margin-bottom */
+            z-index: 10; /* Ensure it's above other content if necessary */
         }
         .status-toggle-label {
             font-size: 1.2em;
@@ -228,10 +227,13 @@
                 </div>
                 <div id="monthlySummaryContent" class="summary-tab-content" style="display:none;">
                     <p><strong>Kazanılan:</strong> <span id="monthlyEarned">0.00</span> TL</p>
-                    <p><strong>Yakıt Gideri:</strong> <span id="monthlyFuelExpense">0.00</span> TL</p>
-                    <p><strong>Diğer Giderler:</strong> <span id="monthlyOtherExpenses">0.00</span> TL</p>
+                    <p><strong>Yakıt Gideri:</strong> <span id="weeklyFuelExpense">0.00</span> TL</p>
+                    <p><strong>Diğer Giderler:</strong> <span id="weeklyOtherExpenses">0.00</span> TL</p>
                     <p style="font-size: 1.2em; font-weight: bold; color: #007bff;"><strong>Net Kâr:</strong> <span id="monthlyNetProfit">0.00</span> TL</p>
                 </div>
+            </div>
+            <div style="width: 100%; margin-top: 20px;">
+                <canvas id="financialChart"></canvas>
             </div>
         </div>
 
@@ -284,6 +286,7 @@
 
         let availableShipments = {}; // To store shipment details from 'new_shipment' event
         let courierShipmentsHistory = []; // To store accepted shipments for historical summary
+        let financialChartInstance = null; // To store the Chart.js instance
 
         // --- New Authentication Flow ---
         let courierId = localStorage.getItem('courierId');
@@ -318,13 +321,15 @@
             const day = d.getDay(); // Sunday - 0, Monday - 1, etc.
             const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Monday start
             d.setDate(diff);
-            return getStartOfDay(d);
+            d.setHours(0,0,0,0); // Ensure time is reset
+            return d.getTime();
         }
 
         function getStartOfMonth(date) {
             const d = new Date(date);
             d.setDate(1);
-            return getStartOfDay(d);
+            d.setHours(0,0,0,0); // Ensure time is reset
+            return d.getTime();
         }
 
         // localStorage management for shipment history
@@ -343,16 +348,26 @@
             let totalFuelExpense = 0;
             let totalOtherExpenses = 0;
             let totalNetProfit = 0;
+            const periodData = {}; // To store data per day/week/month for chart
 
             courierShipmentsHistory.forEach(shipment => {
                 if (shipment.timestamp >= startDate && shipment.timestamp < endDate) {
+                    const dateKey = new Date(shipment.timestamp).toLocaleDateString('tr-TR'); // Use date as key
+                    if (!periodData[dateKey]) {
+                        periodData[dateKey] = { earned: 0, fuelExpense: 0, otherExpenses: 0, netProfit: 0 };
+                    }
+                    periodData[dateKey].earned += parseFloat(shipment.earnings_breakdown.musteri_fiyati);
+                    periodData[dateKey].fuelExpense += parseFloat(shipment.earnings_breakdown.tahmini_yakit_gideri);
+                    periodData[dateKey].otherExpenses += parseFloat(shipment.earnings_breakdown.diger_giderler);
+                    periodData[dateKey].netProfit += parseFloat(shipment.earnings_breakdown.kurye_net_kar);
+
                     totalEarned += parseFloat(shipment.earnings_breakdown.musteri_fiyati);
                     totalFuelExpense += parseFloat(shipment.earnings_breakdown.tahmini_yakit_gideri);
                     totalOtherExpenses += parseFloat(shipment.earnings_breakdown.diger_giderler);
                     totalNetProfit += parseFloat(shipment.earnings_breakdown.kurye_net_kar);
                 }
             });
-            return { earned: totalEarned, fuelExpense: totalFuelExpense, otherExpenses: totalOtherExpenses, netProfit: totalNetProfit };
+            return { earned: totalEarned, fuelExpense: totalFuelExpense, otherExpenses: totalOtherExpenses, netProfit: totalNetProfit, periodData: periodData };
         }
 
         // Update display for a specific summary type
@@ -363,29 +378,131 @@
             document.getElementById(prefix + 'NetProfit').textContent = summaryData.netProfit.toFixed(2);
         }
 
+        // Render Chart.js histogram
+        function renderFinancialChart(periodData, labelPrefix) {
+            const ctx = document.getElementById('financialChart').getContext('2d');
+            const labels = Object.keys(periodData).sort(); // Sort dates for consistent chart display
+            
+            const earnedData = labels.map(label => periodData[label].earned);
+            const fuelExpenseData = labels.map(label => periodData[label].fuelExpense);
+            const otherExpensesData = labels.map(label => periodData[label].otherExpenses);
+            const netProfitData = labels.map(label => periodData[label].netProfit);
+
+
+            if (financialChartInstance) {
+                financialChartInstance.destroy();
+            }
+
+            financialChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: `${labelPrefix} Kazanılan (TL)`,
+                            data: earnedData,
+                            backgroundColor: 'rgba(40, 167, 69, 0.7)', // Green
+                            stack: 'combined',
+                            order: 1
+                        },
+                        {
+                            label: `${labelPrefix} Yakıt Gideri (TL)`,
+                            data: fuelExpenseData,
+                            backgroundColor: 'rgba(255, 193, 7, 0.7)', // Yellow
+                            stack: 'combined',
+                            order: 2
+                        },
+                        {
+                            label: `${labelPrefix} Diğer Giderler (TL)`,
+                            data: otherExpensesData,
+                            backgroundColor: 'rgba(220, 53, 69, 0.7)', // Red
+                            stack: 'combined',
+                            order: 3
+                        },
+                         {
+                            label: `${labelPrefix} Net Kâr (TL)`,
+                            data: netProfitData,
+                            backgroundColor: 'rgba(0, 123, 255, 0.7)', // Blue
+                            type: 'line', // Show net profit as a line
+                            borderColor: 'rgba(0, 123, 255, 1)',
+                            borderWidth: 2,
+                            fill: false,
+                            yAxisID: 'y-axis-line',
+                            order: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            title: {
+                                display: true,
+                                text: 'Dönem'
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Tutar (TL)'
+                            }
+                        },
+                        'y-axis-line': { // New y-axis for the line chart
+                            position: 'right', // Position on the right side
+                            beginAtZero: true,
+                            grid: {
+                                drawOnChartArea: false, // Only draw grid lines for the main y-axis
+                            },
+                            title: {
+                                display: true,
+                                text: 'Net Kâr (TL)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Finansal Genel Bakış'
+                        }
+                    }
+                }
+            });
+        }
+
         // Show specific summary (daily, weekly, monthly)
         function showSummary(timeframe) {
             tabButtons.forEach(button => button.classList.remove('active'));
             summaryTabContents.forEach(content => content.style.display = 'none');
 
-            let summaryData;
+            let summaryResult;
             const now = Date.now();
             let startDate, endDate;
+            let labelPrefix = '';
 
             if (timeframe === 'daily') {
                 document.querySelector('[data-timeframe="daily"]').classList.add('active');
                 document.getElementById('dailySummaryContent').style.display = 'block';
                 startDate = getStartOfDay(now);
                 endDate = startDate + (24 * 60 * 60 * 1000); // End of today
-                summaryData = calculateSummary(startDate, endDate);
-                updateSummaryDisplay(summaryData, 'summary'); // 'summary' prefix for daily spans
+                summaryResult = calculateSummary(startDate, endDate);
+                updateSummaryDisplay(summaryResult, 'summary'); // 'summary' prefix for daily spans
+                labelPrefix = 'Günlük';
             } else if (timeframe === 'weekly') {
                 document.querySelector('[data-timeframe="weekly"]').classList.add('active');
                 document.getElementById('weeklySummaryContent').style.display = 'block';
                 startDate = getStartOfWeek(now);
                 endDate = startDate + (7 * 24 * 60 * 60 * 1000); // End of this week
-                summaryData = calculateSummary(startDate, endDate);
-                updateSummaryDisplay(summaryData, 'weekly');
+                summaryResult = calculateSummary(startDate, endDate);
+                updateSummaryDisplay(summaryResult, 'weekly');
+                labelPrefix = 'Haftalık';
             } else if (timeframe === 'monthly') {
                 document.querySelector('[data-timeframe="monthly"]').classList.add('active');
                 document.getElementById('monthlySummaryContent').style.display = 'block';
@@ -393,9 +510,11 @@
                 const nextMonth = new Date(startDate);
                 nextMonth.setMonth(nextMonth.getMonth() + 1);
                 endDate = nextMonth.getTime(); // End of this month
-                summaryData = calculateSummary(startDate, endDate);
-                updateSummaryDisplay(summaryData, 'monthly');
+                summaryResult = calculateSummary(startDate, endDate);
+                updateSummaryDisplay(summaryResult, 'monthly');
+                labelPrefix = 'Aylık';
             }
+            renderFinancialChart(summaryResult.periodData, labelPrefix);
         }
 
         function initializePanel() {

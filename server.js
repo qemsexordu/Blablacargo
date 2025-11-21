@@ -201,6 +201,67 @@ function calculatePrice(senderCoords, receiverCoords) {
 }
 
 
+// ---- Dynamic Notification Logic ----
+const pendingShipmentNotifications = new Map(); // shipmentId -> { timerId, radius, notifiedCouriers, shipment }
+const INITIAL_RADIUS_KM = 10;
+const RADIUS_INCREMENT_KM = 10;
+const NOTIFICATION_EXPANSION_TIMEOUT_MS = 60000; // 1 minute
+
+// This function finds couriers in an expanding radius and notifies them.
+function findAndNotifyCouriers(shipment) {
+    // Get the current state for this shipment's notification or initialize it
+    const notificationState = pendingShipmentNotifications.get(shipment.id) || {
+        radius: INITIAL_RADIUS_KM,
+        notifiedCouriers: new Set(), // Use a Set to prevent re-notifying the same courier
+        timerId: null
+    };
+
+    console.log(`Gönderi ${shipment.id} için kurye aranıyor. Mevcut yarıçap: ${notificationState.radius} km`);
+
+    const senderCoords = { latitude: shipment.sender.latitude, longitude: shipment.sender.longitude };
+    const newlyFoundCourierIds = [];
+
+    // Find couriers who are active, have a location, and have not been notified yet for this shipment
+    couriers.forEach((courierData, courierId) => {
+        if (courierData.status === 'active' && !notificationState.notifiedCouriers.has(courierId)) {
+            const courierLocation = courierLocations.get(courierId);
+            if (courierLocation) {
+                const distance = calculateDistance(senderCoords.latitude, senderCoords.longitude, courierLocation.latitude, courierLocation.longitude);
+                if (distance <= notificationState.radius) {
+                    newlyFoundCourierIds.push(courierId);
+                    notificationState.notifiedCouriers.add(courierId); // Mark as notified
+                }
+            }
+        }
+    });
+
+    if (newlyFoundCourierIds.length > 0) {
+        console.log(`${shipment.id} gönderisi için ${newlyFoundCourierIds.length} yeni kurye bulundu. Bildirim gönderiliyor...`);
+        sendToCouriers({ type: 'new_shipment', data: shipment }, newlyFoundCourierIds);
+    } else {
+        console.log(`Yarıçap ${notificationState.radius} km içinde yeni aktif kurye bulunamadı.`);
+    }
+
+    // Set a timer to expand the search radius and try again
+    const timerId = setTimeout(() => {
+        const currentShipment = shipments.find(s => s.id === shipment.id);
+        // Only continue if the shipment is still pending
+        if (currentShipment && currentShipment.status === 'pending') {
+            console.log(`${shipment.id} gönderisi için zaman aşımı. Arama yarıçapı genişletiliyor.`);
+            findAndNotifyCouriers(shipment); // Recursive call to expand and re-notify
+        } else {
+            // If shipment is no longer pending, ensure it's cleaned up
+            pendingShipmentNotifications.delete(shipment.id);
+        }
+    }, NOTIFICATION_EXPANSION_TIMEOUT_MS);
+
+    // Update the state for the next cycle
+    notificationState.radius += RADIUS_INCREMENT_KM;
+    notificationState.timerId = timerId;
+    pendingShipmentNotifications.set(shipment.id, notificationState);
+}
+
+
 // ---- WebSocket Logic ----
 const couriers = new Map(); // courierId -> ws
 const senders = new Map();  // shipmentId -> ws
@@ -412,23 +473,8 @@ app.post('/shipments', async (req, res) => {
   shipments.push(newShipment);
   console.log(`Yeni gönderi oluşturuldu: ${newShipment.id}, Fiyat: ${newShipment.price} TL, Kurye Net Kâr: ${newShipment.earnings_breakdown.kurye_net_kar} TL, SMA Tedavisi Katkısı: ${newShipment.earnings_breakdown.sma_tedavisi_katkisi} TL`);
 
-  // Find nearby active couriers and send them the new shipment notification
-  const senderCoords = { latitude: newShipment.sender.latitude, longitude: newShipment.sender.longitude };
-  const nearbyCourierIds = [];
-  couriers.forEach((courierData, courierId) => {
-      if (courierData.status === 'active') {
-          const courierLocation = courierLocations.get(courierId);
-          if (courierLocation) {
-              const distance = calculateDistance(senderCoords.latitude, senderCoords.longitude, courierLocation.latitude, courierLocation.longitude);
-              if (distance <= 15) { // 15 km radius
-                  nearbyCourierIds.push(courierId);
-              }
-          }
-      }
-  });
-
-  console.log(`Yeni gönderi için ${nearbyCourierIds.length} uygun kurye bulundu. Bildirim gönderiliyor...`);
-  sendToCouriers({ type: 'new_shipment', data: newShipment }, nearbyCourierIds);
+  // Kick off the dynamic, expanding-radius search for couriers
+  findAndNotifyCouriers(newShipment);
 
   res.status(201).json({ message: 'Gönderi başarıyla oluşturuldu...', shipment: newShipment });
 });
@@ -437,6 +483,16 @@ app.post('/shipments', async (req, res) => {
 app.post('/shipments/:id/accept', (req, res) => {
     const shipmentId = req.params.id;
     const { courierId } = req.body;
+
+    // --- NEW: Stop the expanding notification search ---
+    const notificationState = pendingShipmentNotifications.get(shipmentId);
+    if (notificationState) {
+        console.log(`Gönderi ${shipmentId} kabul edildi. Genişleyen arama durduruluyor.`);
+        clearTimeout(notificationState.timerId);
+        pendingShipmentNotifications.delete(shipmentId);
+    }
+    // ----------------------------------------------------
+
     if (!courierId) return res.status(400).json({ error: 'Kurye ID\'si gerekli.' });
     const shipment = shipments.find(s => s.id === shipmentId);
     if (!shipment) return res.status(404).json({ error: 'Gönderi bulunamadı.' });

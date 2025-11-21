@@ -221,13 +221,26 @@ function findAndNotifyCouriers(shipment) {
     const senderCoords = { latitude: shipment.sender.latitude, longitude: shipment.sender.longitude };
     const newlyFoundCourierIds = [];
 
+    // --- Enhanced Logging for Debugging ---
+    console.log(`--- Kurye Arama Detayları (Yarıçap: ${notificationState.radius} km) ---`);
+    const activeCouriersForLog = [];
+    couriers.forEach((data, id) => {
+        if (data.status === 'active') {
+            activeCouriersForLog.push({ id: id, location: courierLocations.get(id) || 'Konum Yok' });
+        }
+    });
+    console.log('Aktif Kuryeler:', activeCouriersForLog);
+    // ------------------------------------
+
     // Find couriers who are active, have a location, and have not been notified yet for this shipment
     couriers.forEach((courierData, courierId) => {
         if (courierData.status === 'active' && !notificationState.notifiedCouriers.has(courierId)) {
             const courierLocation = courierLocations.get(courierId);
             if (courierLocation) {
                 const distance = calculateDistance(senderCoords.latitude, senderCoords.longitude, courierLocation.latitude, courierLocation.longitude);
+                console.log(` -> Kurye ${courierId} ile gönderi arası mesafe: ${distance.toFixed(2)} km.`);
                 if (distance <= notificationState.radius) {
+                    console.log(`   --> Kurye ${courierId} yarıçap içinde, bildirime eklendi.`);
                     newlyFoundCourierIds.push(courierId);
                     notificationState.notifiedCouriers.add(courierId); // Mark as notified
                 }

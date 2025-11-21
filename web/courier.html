@@ -664,42 +664,46 @@
             };
 
             ws.onmessage = function(event) {
-                const message = JSON.parse(event.data);
-                console.log('Sunucudan mesaj alındı:', message);
+                try {
+                    const message = JSON.parse(event.data);
+                    console.log('Sunucudan mesaj alındı:', message);
 
-                switch (message.type) {
-                    case 'welcome':
-                        console.log('Sunucudan hoşgeldin mesajı:', message.message);
-                        break;
-                    case 'new_shipment':
-                        console.log('Yeni gönderi bildirimi:', message.data);
-                        availableShipments[message.data.id] = message.data; // Store full shipment data
-                        displayNewShipment(message.data);
-                        break;
-                    case 'shipment_taken':
-                        {
-                            const shipmentId = message.data.id;
-                            console.log(`Gönderi ${shipmentId} başkası tarafından alındı.`);
-                            const shipmentElement = document.getElementById(`shipment-${shipmentId}`);
-                            if (shipmentElement) {
-                                shipmentElement.classList.add('taken');
-                                shipmentElement.onclick = () => {
-                                    alert('Bu gönderi başka bir kurye tarafından alınmıştır.');
-                                };
-                                setTimeout(() => {
-                                    shipmentElement.remove();
-                                }, 15000); // Remove after 15 seconds
+                    switch (message.type) {
+                        case 'welcome':
+                            console.log('Sunucudan hoşgeldin mesajı:', message.message);
+                            break;
+                        case 'new_shipment':
+                            console.log('Yeni gönderi bildirimi:', message.data);
+                            availableShipments[message.data.id] = message.data; // Store full shipment data
+                            displayNewShipment(message.data);
+                            break;
+                        case 'shipment_taken':
+                            {
+                                const shipmentId = message.data.id;
+                                console.log(`Gönderi ${shipmentId} başkası tarafından alındı.`);
+                                const shipmentElement = document.getElementById(`shipment-${shipmentId}`);
+                                if (shipmentElement) {
+                                    shipmentElement.classList.add('taken');
+                                    shipmentElement.onclick = () => {
+                                        alert('Bu gönderi başka bir kurye tarafından alınmıştır.');
+                                    };
+                                    setTimeout(() => {
+                                        shipmentElement.remove();
+                                    }, 15000); // Remove after 15 seconds
+                                }
                             }
-                        }
-                        break;
-                    case 'error':
-                        console.error('Sunucudan hata:', message.message);
-                        alert(`Sunucu hatası: ${message.message}`);
-                        break;
-                    case 'stats_updated':
-                        console.log('İstatistikler güncellendi, yeniden çekiliyor...');
-                        fetchCourierStats();
-                        break;
+                            break;
+                        case 'error':
+                            console.error('Sunucudan hata:', message.message);
+                            alert(`Sunucu hatası: ${message.message}`);
+                            break;
+                        case 'stats_updated':
+                            console.log('İstatistikler güncellendi, yeniden çekiliyor...');
+                            fetchCourierStats();
+                            break;
+                    }
+                } catch (error) {
+                    console.error('WebSocket mesajı işlenirken hata oluştu:', error);
                 }
             };
 

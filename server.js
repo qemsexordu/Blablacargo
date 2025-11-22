@@ -23,7 +23,20 @@ app.get('/', (req, res) => {
 const shipments = [];
 let shipmentCounter = 1;
 const courierLocations = new Map(); // courierId -> { latitude, longitude, timestamp }
-const registeredCouriers = []; // NOTE: In-memory storage, resets on server restart.
+const registeredCouriers = [
+    {
+        id: 'kurye-0',
+        firstName: 'Ahmet',
+        lastName: 'Yılmaz',
+        email: 'ahmet.yilmaz@example.com',
+        phone: '0 (555) 123 45 67',
+        password: 'password123',
+        tcKimlikNo: '12345678901',
+        iban: 'TR123456789012345678901234',
+        vehicle: 'Motosiklet',
+        createdAt: new Date().toISOString()
+    }
+]; // NOTE: In-memory storage, resets on server restart.
 let courierIdCounter = 1;
 
 // ---- Courier Authentication Endpoints ----

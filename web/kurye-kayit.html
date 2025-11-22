@@ -159,117 +159,16 @@
 <body>
     <div class="container">
         <h1>Kurye Olarak Kaydol</h1>
-        <form id="registerForm">
-            <div class="form-group">
-                <label for="firstName">Ad</label>
-                <input type="text" id="firstName" name="firstName" required>
-            </div>
-            <div class="form-group">
-                <label for="lastName">Soyad</label>
-                <input type="text" id="lastName" name="lastName" required>
-            </div>
-            <div class="form-group">
-                <label for="tcKimlikNo">T.C. Kimlik Numarası</label>
-                <input type="text" id="tcKimlikNo" name="tcKimlikNo" required minlength="11" maxlength="11" pattern="[0-9]{11}" inputmode="numeric" title="T.C. Kimlik Numarası 11 rakamdan oluşmalıdır.">
-            </div>
-            <div class="form-group">
-                <label for="email">E-posta</label>
-                <input type="email" id="email" name="email" required>
-            </div>
-            <div class="form-group">
-                <label for="phone">Telefon</label>
-                <input type="tel" id="phone" name="phone" required maxlength="11" pattern="0[0-9]{10}" title="Telefon numarası 0 ile başlamalı ve toplam 11 rakamdan oluşmalıdır." inputmode="numeric">
-            </div>
-            <div class="form-group">
-                <label for="password">Şifre</label>
-                <div class="password-wrapper">
-                    <input type="password" id="password" name="password" required minlength="6" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+}{&quot;:'/?&gt;.<,])(?=.*[^a-zA-Z0-9\s]).{6,}" title="Şifre en az 6 karakter olmalı, büyük harf, küçük harf, rakam ve özel karakter içermelidir.">
-                    <span class="toggle-password">👁️</span>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="iban">IBAN</label>
-                <input type="text" id="iban" name="iban" required minlength="26" maxlength="26" pattern="TR[0-9A-Z]{24}" title="IBAN TR ile başlamalı ve toplam 26 karakterden oluşmalıdır (TR + 24 karakter)." style="text-transform: uppercase;">
-            </div>
-            <fieldset class="form-group">
-                <legend>Ehliyet ve Vergi Levhası Bilgileri</legend>
-                <div class="form-group">
-                    <label>Selfie</label>
-                    <div class="file-upload-wrapper">
-                        <input type="file" id="selfie" name="selfie" class="file-input" accept="image/*" capture="user" required>
-                        <label for="selfie" class="file-upload-button">Belge Yükle</label>
-                        <span class="file-name">Dosya seçilmedi</span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Ehliyet (Ön Yüz)</label>
-                    <div class="file-upload-wrapper">
-                        <input type="file" id="licenseFront" name="licenseFront" class="file-input" accept="image/*" required>
-                        <label for="licenseFront" class="file-upload-button">Belge Yükle</label>
-                        <span class="file-name">Dosya seçilmedi</span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Ehliyet (Arka Yüz)</label>
-                    <div class="file-upload-wrapper">
-                        <input type="file" id="licenseBack" name="licenseBack" class="file-input" accept="image/*" required>
-                        <label for="licenseBack" class="file-upload-button">Belge Yükle</label>
-                        <span class="file-name">Dosya seçilmedi</span>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Vergi Levhası</label>
-                    <div class="file-upload-wrapper">
-                        <input type="file" id="taxPlate" name="taxPlate" class="file-input" accept="image/*,application/pdf" required>
-                        <label for="taxPlate" class="file-upload-button">Belge Yükle</label>
-                        <span class="file-name">Dosya seçilmedi</span>
-                    </div>
-                </div>
-            </fieldset>
-            <div class="form-group">
-                <label for="vehicleType">Araç Tipi</label>
-                <select id="vehicleType" name="vehicleType" required>
-                    <option value="">Seçiniz...</option>
-                    <option value="motosiklet">Motosiklet</option>
-                    <option value="araba">Araba</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="licensePlate">Araç Plakası</label>
-                <input type="text" id="licensePlate" name="licensePlate" required>
-            </div>
-            <button type="submit">Kayıt Ol</button>
-        </form>
+        <p style="text-align: center;">Giriş sayfasına yönlendiriliyorsunuz...</p>
         <div id="response" class="response-message" style="display: none;"></div>
-        <div class="login-link">
+        <div class="login-link" style="display: none;">
             <p>Zaten bir hesabın var mı? <a href="/kurye-giris.html">Giriş Yap</a></p>
         </div>
     </div>
     
     <script>
-        // Registration logic will be implemented here.
-
-        document.querySelectorAll('.file-input').forEach(input => {
-            input.addEventListener('change', (event) => {
-                const fileNameSpan = event.target.nextElementSibling.nextElementSibling;
-                if (event.target.files.length > 0) {
-                    fileNameSpan.textContent = event.target.files[0].name;
-                } else {
-                    fileNameSpan.textContent = 'Dosya seçilmedi';
-                }
-            });
-        });
-
-        const togglePassword = document.querySelector('.toggle-password');
-        const passwordInput = document.getElementById('password');
-
-        togglePassword.addEventListener('click', function () {
-            // Toggle the type of the password input
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            
-            // Toggle the icon
-            this.textContent = type === 'password' ? '👁️' : '🙈';
+        document.addEventListener('DOMContentLoaded', () => {
+            window.location.href = '/kurye-giris.html';
         });
     </script>
 </body>

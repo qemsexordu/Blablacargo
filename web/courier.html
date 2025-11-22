@@ -365,12 +365,17 @@
 
         // --- Get Courier ID from localStorage ---
         const courierId = localStorage.getItem('courierId');
+        let ws; // Define ws in a higher scope
 
         if (!courierId) {
             // If no courierId is found, redirect to the login page.
             window.location.href = '/kurye-giris.html';
         } else {
             courierIdDisplay.textContent = `Kurye ID: ${courierId}`;
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsHost = window.location.host;
+            const wsUrl = `${wsProtocol}//${wsHost}`;
+            ws = new WebSocket(wsUrl); // Assign the WebSocket object to the higher-scoped ws
             initializePanel();
         }
 
@@ -636,27 +641,6 @@
                 initialTabPane.style.display = 'block';
             }
 
-            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsHost = window.location.host;
-            const wsUrl = `${wsProtocol}//${wsHost}`;
-            const ws = new WebSocket(wsUrl);
-
-            courierStatusToggle.addEventListener('change', () => {
-                isCourierActive = courierStatusToggle.checked;
-                const statusUpdate = { type: 'status_update', data: { status: isCourierActive ? 'active' : 'inactive' } };
-                ws.send(JSON.stringify(statusUpdate));
-
-                if (isCourierActive) {
-                    statusLabel.textContent = 'Aktif';
-                    statusLabel.style.color = '#28a745';
-                    startLocationTracking(ws);
-                } else {
-                    statusLabel.textContent = 'Pasif';
-                    statusLabel.style.color = '#dc3545';
-                    stopLocationTracking();
-                }
-            });
-
             ws.onopen = function() {
                 console.log('WebSocket bağlantısı kuruldu.');
                 ws.send(JSON.stringify({ type: 'register', data: { role: 'courier', id: courierId } }));
@@ -721,6 +705,23 @@
 
             fetchCourierStats();
         }
+
+        courierStatusToggle.addEventListener('change', () => {
+            isCourierActive = courierStatusToggle.checked;
+            const statusUpdate = { type: 'status_update', data: { status: isCourierActive ? 'active' : 'inactive' } };
+            ws.send(JSON.stringify(statusUpdate));
+
+            if (isCourierActive) {
+                statusLabel.textContent = 'Aktif';
+                statusLabel.style.color = '#28a745';
+                startLocationTracking(ws);
+            } else {
+                statusLabel.textContent = 'Pasif';
+                statusLabel.style.color = '#dc3545';
+                stopLocationTracking();
+            }
+        });
+
         async function fetchCourierStats() {
             try {
                 const response = await fetch(`/couriers/${courierId}/stats`);

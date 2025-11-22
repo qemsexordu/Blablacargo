@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KapGel - Kurye Giriş</title>
     <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/images/logo.png">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -90,6 +91,17 @@
             text-decoration: none;
             font-weight: 500;
         }
+        .password-wrapper {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            user-select: none; /* Prevents selecting the icon text */
+        }
     </style>
 </head>
 <body>
@@ -102,7 +114,10 @@
             </div>
             <div class="form-group">
                 <label for="password">Şifre</label>
-                <input type="password" id="password" name="password" required>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" required>
+                    <span class="toggle-password">👁️</span>
+                </div>
             </div>
             <button type="submit">Giriş Yap</button>
         </form>
@@ -113,10 +128,19 @@
     </div>
     
     <script>
-        // TEMPORARY DEVELOPMENT BYPASS: This block completely bypasses login for testing purposes.
-        // REMOVE BEFORE PRODUCTION DEPLOYMENT.
-        localStorage.setItem('courierId', 'dev_courier_123'); // Set a dummy courier ID
-        window.location.href = '/courier.html';
+        // Login logic will be implemented here
+
+        const togglePassword = document.querySelector('.toggle-password');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('click', function () {
+            // Toggle the type of the password input
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle the icon
+            this.textContent = type === 'password' ? '👁️' : '🙈';
+        });
     </script>
 </body>
 </html>

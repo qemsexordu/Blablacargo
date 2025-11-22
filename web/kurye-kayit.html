@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KapGel - Kurye Kayıt</title>
     <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/images/logo.png">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -142,6 +143,17 @@
             color: #555;
             font-size: 14px;
         }
+        .password-wrapper {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            user-select: none; /* Prevents selecting the icon text */
+        }
     </style>
 </head>
 <body>
@@ -170,7 +182,10 @@
             </div>
             <div class="form-group">
                 <label for="password">Şifre</label>
-                <input type="password" id="password" name="password" required minlength="6" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+}{&quot;:'/?&gt;.<,])(?=.*[^a-zA-Z0-9\s]).{6,}" title="Şifre en az 6 karakter olmalı, büyük harf, küçük harf, rakam ve özel karakter içermelidir.">
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" required minlength="6" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*()_+}{&quot;:'/?&gt;.<,])(?=.*[^a-zA-Z0-9\s]).{6,}" title="Şifre en az 6 karakter olmalı, büyük harf, küçük harf, rakam ve özel karakter içermelidir.">
+                    <span class="toggle-password">👁️</span>
+                </div>
             </div>
             <div class="form-group">
                 <label for="iban">IBAN</label>
@@ -243,6 +258,18 @@
                     fileNameSpan.textContent = 'Dosya seçilmedi';
                 }
             });
+        });
+
+        const togglePassword = document.querySelector('.toggle-password');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('click', function () {
+            // Toggle the type of the password input
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle the icon
+            this.textContent = type === 'password' ? '👁️' : '🙈';
         });
     </script>
 </body>

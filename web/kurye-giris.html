@@ -129,39 +129,14 @@
     </div>
     
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const email = 'ahmet.yilmaz@example.com';
-            const password = 'password123';
-            const responseDiv = document.getElementById('response');
-
-            try {
-                const response = await fetch('/couriers/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Store courier ID in localStorage
-                    localStorage.setItem('courierId', data.courierId);
-                    
-                    // Redirect to the courier panel
-                    window.location.href = '/courier.html';
-                } else {
-                    responseDiv.textContent = `Otomatik giriş başarısız: ${data.error}`;
-                    responseDiv.style.display = 'block';
-                    responseDiv.classList.add('error');
-                }
-            } catch (error) {
-                responseDiv.textContent = 'Sunucuya bağlanırken bir hata oluştu.';
-                responseDiv.style.display = 'block';
-                responseDiv.classList.add('error');
-                console.error('Login error:', error);
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            const defaultCourierId = 'kurye-0';
+            
+            // Directly set the courier ID in localStorage to bypass login.
+            localStorage.setItem('courierId', defaultCourierId);
+            
+            // Redirect to the courier panel.
+            window.location.href = '/courier.html';
         });
     </script>
 </body>
